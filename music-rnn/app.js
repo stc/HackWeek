@@ -37,10 +37,27 @@ const MOODS = {
 
 var state = {
   nextSeq: null,
-  tempo: 180,
+  tempo: null,
   chords: [],
   started: false,
   pollHandler: null,
+}
+
+function translateParams(params) {
+  state.chords = MOODS[params.mood][params.character - 1];
+  state.tempo = Math.round(120 + (params.tempo * 100));
+
+  console.log("Polled", params, state.chords, state.tempo);
+
+  if (!state.nextSeq) {
+    compose(state.chords).then(seq => {
+      state.nextSeq = seq;
+      if (!state.started) {
+        state.started = true
+        playSeq()
+      }
+    })
+  }
 }
 
 function pollParams() {
@@ -53,23 +70,8 @@ function pollParams() {
 
   fetch('/music.json')
   .then(resp => resp.json())
-  .then(resp => {
-    params = resp
-    state.chords = MOODS[params.mood][params.character - 1];
-    state.tempo = Math.round(120 + (params.tempo * 100));
-
-    console.log("Polled", params, state.chords, state.tempo);
-
-    if (!state.nextSeq) {
-      compose(state.chords).then(seq => {
-        state.nextSeq = seq;
-        if (!state.started) {
-          state.started = true
-          playSeq()
-        }
-      })
-    }
-  })
+  .then(translateParams)
+  .catch(() => {translateParams(params)})
 }
 
 // returns an improvised Sequence over the specifed chord progression.
