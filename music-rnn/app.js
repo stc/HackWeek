@@ -52,7 +52,7 @@ function pollParams() {
   };
 
   state.chords = MOODS[params.mood][params.character - 1];
-  state.tempo = Math.round(100 + (params.tempo * 100) + (params.intensity * 100));
+  state.tempo = Math.round(100 + (params.tempo * 100));
 
   console.log("Polled", params, state.chords, state.tempo);
 
