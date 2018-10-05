@@ -142,18 +142,21 @@ function draw() {
   //   text( currentChords[i], 50, i * 30 + 40);
   // }
   fill(200,0,100);
-  text("Click to play", 50, 300);
+  text("Click to stop", 50, 300);
 }
 
 function mouseReleased() {
-  // playSeq();
+  player.stop()
+  if (state.pollHandler) {
+    clearInterval(state.pollHandler)
+  }
 }
 
 // Initialize model then start playing.
 model.initialize().then(() => {
   document.getElementById('message').innerText = 'Done loading model.'
   mm.Player.tone.context.resume();
-  setInterval(pollParams, 1000);
+  state.pollHandler = setInterval(pollParams, 1000);
 });
 
 function playSeq() {
