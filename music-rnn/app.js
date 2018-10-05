@@ -43,6 +43,7 @@ var state = {
   nextSeq: null,
   tempo: null,
   nextTempo: null,
+  scene: null,
   chords: [],
   nextChords: [],
   started: false,
@@ -54,6 +55,7 @@ var state = {
 function translateParams(params) {
   state.nextChords = MOODS[params.mood][params.character - 1] || [];
   state.nextTempo = Math.round(120 + (params.tempo * 100));
+  state.scene = params.scene || ''
 
   console.log("Polled", params, state.nextChords, state.nextTempo);
 
@@ -73,7 +75,8 @@ function pollParams() {
     "mood" : "happy", // "happy" or "sad"
     "character" : 1, // 1 - 3
     "tempo" : 0.3,//Math.random(),  //0.29724919083554, // 0.0 - 1.0
-    "intensity" : 0.3 // 0.0 - 1.0
+    "intensity" : 0.3, // 0.0 - 1.0
+    "scene": "mainmenu",
   };
 
   fetch('/music.json')
@@ -155,6 +158,8 @@ function draw() {
   const lineHeight = 20
   var x = 20
   var y = lineHeight
+  text("scene: " + state.scene, x, y);
+  y += lineHeight
   var chordsText = state.chords.join(' ')
   var nextChordsText = state.nextChords.join(' ')
   text("chords: " + chordsText
