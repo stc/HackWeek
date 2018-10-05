@@ -145,7 +145,7 @@ const compose = (chords) => {
 // UI & Canvas elements
 
 function setup() {
-  createCanvas(400,400);
+  createCanvas(800,400);
 }
 
 function draw() {
@@ -153,18 +153,19 @@ function draw() {
   textSize(14);
   fill(255);
   const lineHeight = 20
+  var x = 20
   var y = lineHeight
   var chordsText = state.chords.join(' ')
   var nextChordsText = state.nextChords.join(' ')
   text("chords: " + chordsText
-      + (chordsText === nextChordsText ? '' : ' (next: ' + nextChordsText + ')'), 50, y);
+      + (chordsText === nextChordsText ? '' : ' (next: ' + nextChordsText + ')'), x, y);
   y += lineHeight
   text("tempo: " + state.tempo
-    + (state.tempo === state.nextTempo ? '' : ' (next: ' + state.nextTempo + ')'), 50, y);
+    + (state.tempo === state.nextTempo ? '' : ' (next: ' + state.nextTempo + ')'), x, y);
   y += lineHeight
-  text("loop: #" + state.loopCount + ' ' + state.loopRep + '/' + LOOP_REPS, 50, y)
+  text("loop: #" + state.loopCount + ' ' + state.loopRep + '/' + LOOP_REPS, x, y)
   fill(200,0,100);
-  text("Click to stop", 50, 300);
+  text("Click to stop", x, 300);
 }
 
 function mouseReleased() {
