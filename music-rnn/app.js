@@ -69,7 +69,7 @@ function pollParams() {
 
 // returns an improvised Sequence over the specifed chord progression.
 const compose = (chords) => {
-
+  console.log('composing loop', chords)
   // Prime with root note of the first chord.
   const root = mm.chords.ChordSymbols.root(chords[0]);
   const seq = {
@@ -160,6 +160,7 @@ model.initialize().then(() => {
 function playSeq() {
   console.log("Playing", state.nextSeq);
   let seq = state.nextSeq;
+  state.nextSeq = null;
   player.start(seq, state.tempo).then(() => {
     player.start(seq, state.tempo).then(() => {
       player.start(seq, state.tempo).then(() => {
