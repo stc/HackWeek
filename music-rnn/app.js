@@ -14,6 +14,10 @@ const STEPS_PER_PROG = 4 * STEPS_PER_CHORD;
 // Number of times to repeat chord progression.
 const NUM_REPS = 1;
 
+// Number of times to repeat the loop
+// XXX wait, how is this different than NUM_REPS
+const LOOP_REPS = 4;
+
 // Set up Improv RNN model and player.
 const model = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/chord_pitches_improv');
 const player = new mm.Player(true,printMe);
@@ -38,19 +42,23 @@ const MOODS = {
 var state = {
   nextSeq: null,
   tempo: null,
+  nextTempo: null,
   chords: [],
+  nextChords: [],
   started: false,
   pollHandler: null,
+  loopRep: 0,
+  loopCount: 0,
 }
 
 function translateParams(params) {
-  state.chords = MOODS[params.mood][params.character - 1];
-  state.tempo = Math.round(120 + (params.tempo * 100));
+  state.nextChords = MOODS[params.mood][params.character - 1] || [];
+  state.nextTempo = Math.round(120 + (params.tempo * 100));
 
-  console.log("Polled", params, state.chords, state.tempo);
+  console.log("Polled", params, state.nextChords, state.nextTempo);
 
   if (!state.nextSeq) {
-    compose(state.chords).then(seq => {
+    compose(state.nextChords).then(seq => {
       state.nextSeq = seq;
       if (!state.started) {
         state.started = true
@@ -144,8 +152,17 @@ function draw() {
   background(20);
   textSize(14);
   fill(255);
-  text("current chords: " + state.chords.join(' '), 50, 20);
-  text("current tempo: " + state.tempo, 50, 40);
+  const lineHeight = 20
+  var y = lineHeight
+  var chordsText = state.chords.join(' ')
+  var nextChordsText = state.nextChords.join(' ')
+  text("chords: " + chordsText
+      + (chordsText === nextChordsText ? '' : ' (next: ' + nextChordsText + ')'), 50, y);
+  y += lineHeight
+  text("tempo: " + state.tempo
+    + (state.tempo === state.nextTempo ? '' : ' (next: ' + state.nextTempo + ')'), 50, y);
+  y += lineHeight
+  text("loop: #" + state.loopCount + ' ' + state.loopRep + '/' + LOOP_REPS, 50, y)
   fill(200,0,100);
   text("Click to stop", 50, 300);
 }
@@ -164,17 +181,24 @@ model.initialize().then(() => {
   state.pollHandler = setInterval(pollParams, 1000);
 });
 
+function createPlayOnce(seq) {
+  return () => {
+    state.tempo = state.nextTempo
+    state.loopRep = state.loopRep % LOOP_REPS + 1
+    return player.start(seq, state.tempo)
+  }
+}
+
 function playSeq() {
   console.log("Playing", state.nextSeq);
   let seq = state.nextSeq;
+  state.chords = state.nextChords
   state.nextSeq = null;
-  player.start(seq, state.tempo).then(() => {
-    player.start(seq, state.tempo).then(() => {
-      player.start(seq, state.tempo).then(() => {
-        player.start(seq, state.tempo).then(() => {
-          playSeq();
-        });
-      });
-    });
-  });
+  state.loopCount += 1
+  var playOnce = createPlayOnce(seq)
+  var prevPromise = playOnce()
+  for (var i = 0; i < LOOP_REPS - 1; ++i) {
+    prevPromise = prevPromise.then(playOnce)
+  }
+  prevPromise.then(playSeq)
 }
