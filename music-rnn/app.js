@@ -136,11 +136,9 @@ function setup() {
 function draw() {
   background(20);
   textSize(14);
-    fill(255);
-    text("current chords:", 50, 20);
-  // for(let i=0;i<currentChords.length;i++) {
-  //   text( currentChords[i], 50, i * 30 + 40);
-  // }
+  fill(255);
+  text("current chords: " + state.chords.join(' '), 50, 20);
+  text("current tempo: " + state.tempo, 50, 40);
   fill(200,0,100);
   text("Click to stop", 50, 300);
 }
