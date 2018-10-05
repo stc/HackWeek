@@ -8,15 +8,11 @@ UI is made with p5js, sound is produced with tonejs ATM
 */
 
 // Number of steps to play each chord.
-STEPS_PER_CHORD = 32;
-STEPS_PER_PROG = 4 * STEPS_PER_CHORD;
+const STEPS_PER_CHORD = 32;
+const STEPS_PER_PROG = 4 * STEPS_PER_CHORD;
 
 // Number of times to repeat chord progression.
-NUM_REPS = 1;
-
-tempo = 180;
-
-nextSeq = null;
+const NUM_REPS = 1;
 
 // Set up Improv RNN model and player.
 const model = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/chord_pitches_improv');
@@ -26,7 +22,7 @@ function printMe(e) {
   // console.log(e);
 }
 
-let moods = {
+const MOODS = {
   "happy" : [
     ["A", "D", "C", "E"],
     ["D", "G", "C", "E"],
@@ -39,57 +35,60 @@ let moods = {
   ],
 };
 
+var state = {
+  nextSeq: null,
+  tempo: 180,
+  chords: [],
+  started: false,
+  pollHandler: null,
+}
 
 function pollParams() {
   let params = {
     "mood" : "happy", // "happy" or "sad"
     "character" : 1, // 1 - 3
-    "tempo" : Math.random(),  //0.29724919083554, // 0.0 - 1.0
+    "tempo" : 0.3,//Math.random(),  //0.29724919083554, // 0.0 - 1.0
     "intensity" : 0.3 // 0.0 - 1.0
   };
 
+  state.chords = MOODS[params.mood][params.character - 1];
+  state.tempo = Math.round(100 + (params.tempo * 100) + (params.intensity * 100));
 
-  let chords = moods[params.mood][params.character];
-  tempo = Math.round(100 + (params.tempo * 100) + (params.intensity * 100));
+  console.log("Polled", params, state.chords, state.tempo);
 
-    console.log("Polled", params, chords, tempo);
-
-  if (!nextSeq) {
-    compose(chords).then(seq => {
-      nextSeq = seq;
-      playSeq()
-    });
-  } else {
-    compose(chords).then(seq => {
-      nextSeq = seq;
-    });
+  if (!state.nextSeq) {
+    compose(state.chords).then(seq => {
+      state.nextSeq = seq;
+      if (!state.started) {
+        state.started = true
+        playSeq()
+      }
+    })
   }
 }
 
 // returns an improvised Sequence over the specifed chord progression.
 const compose = (chords) => {
-  
+
   // Prime with root note of the first chord.
   const root = mm.chords.ChordSymbols.root(chords[0]);
-  const seq = { 
+  const seq = {
     quantizationInfo: {stepsPerQuarter: 4},
     notes: [],
     totalQuantizedSteps: 1
-  };  
-  
+  };
+
   return model.continueSequence(seq, STEPS_PER_PROG + (NUM_REPS-1)*STEPS_PER_PROG - 1, 0.75, chords)
     .then((contSeq) => {
       // Add the continuation to the original.
       contSeq.notes.forEach((note) => {
         note.quantizedStartStep += 1;
         note.quantizedEndStep += 1;
-        // note.velocity = Math.round(Math.random() * 127);
-        // note.program = Math.round(Math.random() * 127);
         seq.notes.push(note);
       });
-    
+
       const roots = chords.map(mm.chords.ChordSymbols.root);
-      for (var i=0; i<NUM_REPS; i++) { 
+      for (var i=0; i<NUM_REPS; i++) {
         // Add the bass progression.
         seq.notes.push({
           instrument: 10,
@@ -118,15 +117,15 @@ const compose = (chords) => {
           pitch: 36 + roots[3],
           quantizedStartStep: i*STEPS_PER_PROG + 3*STEPS_PER_CHORD,
           quantizedEndStep: i*STEPS_PER_PROG + 4*STEPS_PER_CHORD
-        });        
+        });
       }
-    
+
       // Set total sequence length.
       seq.totalQuantizedSteps = STEPS_PER_PROG * NUM_REPS;
-    
+
      return seq;
     });
-}  
+}
 
 // UI & Canvas elements
 
@@ -157,18 +156,13 @@ model.initialize().then(() => {
   setInterval(pollParams, 1000);
 });
 
-function currentTempo() {
-  return tempo;
-}
-
-// Play when play button is clicked.
 function playSeq() {
-  console.log("Playing", nextSeq);
-  let seq = nextSeq;
-  player.start(seq, currentTempo()).then(() => {
-    player.start(seq, currentTempo()).then(() => {
-      player.start(seq, currentTempo()).then(() => {
-        player.start(seq, currentTempo()).then(() => {
+  console.log("Playing", state.nextSeq);
+  let seq = state.nextSeq;
+  player.start(seq, state.tempo).then(() => {
+    player.start(seq, state.tempo).then(() => {
+      player.start(seq, state.tempo).then(() => {
+        player.start(seq, state.tempo).then(() => {
           playSeq();
         });
       });
