@@ -26,18 +26,19 @@ function printMe(e) {
   // console.log(e);
 }
 
-const MOODS = {
-  "happy" : [
-    ["A", "D", "C", "E"],
-    ["D", "G", "C", "E"],
-    ["G", "A", "D", "A"]
-  ],
-  "sad" : [
-    ["Am", "Dm", "Cm", "Em"],
-    ["Dm", "Gm", "Cm", "Em"],
-    ["Gm", "Am", "Dm", "Am"]
-  ],
-};
+const SCENES = {
+  mainmenu: ['A', 'D', 'C', 'E'],
+  base: ['D', 'G', 'C', 'E'],
+  level: ['G', 'A', 'D', 'A'],
+  debrief: ['C', 'F', 'C', 'G'],
+  explore: ['A', 'D', 'A', 'E'],
+  factory: ['D', 'G', 'D', 'E'],
+}
+
+function moodify(chords, mood) {
+  return mood === 'happy' ? chords :
+      chords.map(c => c + 'm')
+}
 
 var state = {
   nextSeq: null,
@@ -52,10 +53,24 @@ var state = {
   loopCount: 0,
 }
 
+function resetSeq() {
+  state.nextSeq = null
+  state.started = false
+  state.loopRep = 0
+  state.nextChords = moodify(SCENES[state.scene], state.mood)
+}
+
 function translateParams(params) {
-  state.nextChords = MOODS[params.mood][params.character - 1] || [];
+
+  if (state.scene !== params.scene) {
+    state.scene = params.scene
+    resetSeq()
+  }
+  if (state.mood !== params.mood) {
+    state.mood = params.mood
+    resetSeq()
+  }
   state.nextTempo = Math.round(120 + (params.tempo * 100));
-  state.scene = params.scene || ''
 
   console.log("Polled", params, state.nextChords, state.nextTempo);
 
@@ -196,6 +211,7 @@ function createPlayOnce(seq) {
 }
 
 function playSeq() {
+  player.stop()
   console.log("Playing", state.nextSeq);
   let seq = state.nextSeq;
   state.chords = state.nextChords
