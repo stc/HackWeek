@@ -20206,7 +20206,7 @@ var players = new Tone.Players(samples, function onPlayersLoaded(){
                             var r = new o.Frequency(e.pitch, "midi"),
                                 i = e.endTime - e.startTime;
                             //this.getSynth(e.instrument, e.program).triggerAttackRelease(r, i, t)
-                            console.log(r);
+                            // console.log(r);
                             var player = players.get(r._val);
     						player.fadeOut = 0.05;
     						player.fadeIn = 0.01;
