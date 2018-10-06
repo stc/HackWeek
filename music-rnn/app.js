@@ -109,6 +109,7 @@ const filteredCompose = (chords, jury) => {
       if (jury(seq)) {
         resolve(seq)
       } else {
+        console.log('ROBOT JURY NOT ENTERTAINED. REJECTING COMPOSITION.')
         filteredCompose(chords, jury)
         .then(resolve)
       }
