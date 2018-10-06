@@ -40,7 +40,7 @@ function moodify(chords, mood) {
       chords.map(c => c + 'm')
 }
 
-var state = {
+const state = {
   nextSeq: null,
   tempo: null,
   nextTempo: null,
@@ -60,6 +60,10 @@ function resetSeq() {
   state.nextChords = moodify(SCENES[state.scene], state.mood)
 }
 
+// return false if a single note represents more than 60% of sequence
+const isRobotMusic = seq => Object.keys(seq.pitches)
+  .every(pitch => seq.pitches[pitch] < seq.notes.length * 0.6)
+
 function translateParams(params) {
 
   if (state.scene !== params.scene) {
@@ -73,8 +77,7 @@ function translateParams(params) {
   state.nextTempo = Math.round(120 + (params.tempo * 100));
 
   if (!state.nextSeq) {
-    // TODO: implement actual filter, this is just for testing
-    filteredCompose(state.nextChords, seq => seq.pitches[67] > 8)
+    filteredCompose(state.nextChords, isRobotMusic)
     .then(seq => {
       state.nextSeq = seq;
       if (!state.started) {
