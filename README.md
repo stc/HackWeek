@@ -14,3 +14,9 @@ Terraforming Earth exports music parameters every second to `$SAVE_DIR/music.jso
     python -m SimpleHTTPServer &
     open http://localhost:8000/genmusic
 
+Sometimes the simple HTTP server doesn't fetch the fresh `music.json` or something. If the music engine doesn't react to the game, open `music.json` in your browser.
+
+    open http://localhost:8000/music.json
+
+
+
