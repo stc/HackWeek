@@ -72,10 +72,10 @@ function translateParams(params) {
   }
   state.nextTempo = Math.round(120 + (params.tempo * 100));
 
-  console.log("Polled", params, state.nextChords, state.nextTempo);
-
   if (!state.nextSeq) {
-    compose(state.nextChords).then(seq => {
+    // TODO: implement actual filter, this is just for testing
+    filteredCompose(state.nextChords, seq => seq.pitches[67] > 8)
+    .then(seq => {
       state.nextSeq = seq;
       if (!state.started) {
         state.started = true
@@ -100,6 +100,19 @@ function pollParams() {
   .catch(() => {translateParams(params)})
 }
 
+const filteredCompose = (chords, jury) => {
+  return new Promise(resolve => {
+    compose(chords).then(seq => {
+      if (jury(seq)) {
+        resolve(seq)
+      } else {
+        filteredCompose(chords, jury)
+        .then(resolve)
+      }
+    })
+  })
+}
+
 // returns an improvised Sequence over the specifed chord progression.
 const compose = (chords) => {
   console.log('composing loop', chords)
@@ -108,17 +121,20 @@ const compose = (chords) => {
   const seq = {
     quantizationInfo: {stepsPerQuarter: 4},
     notes: [],
-    totalQuantizedSteps: 1
+    totalQuantizedSteps: 1,
+    pitches: {},
   };
 
   return model.continueSequence(seq, STEPS_PER_PROG + (NUM_REPS-1)*STEPS_PER_PROG - 1, 0.75, chords)
     .then((contSeq) => {
       // Add the continuation to the original.
       contSeq.notes.forEach((note) => {
+        seq.pitches[note.pitch] = (seq.pitches[note.pitch] || 0) + 1
         note.quantizedStartStep += 1;
         note.quantizedEndStep += 1;
         seq.notes.push(note);
       });
+      console.log('composition ready', seq.pitches)
 
       const roots = chords.map(mm.chords.ChordSymbols.root);
       for (var i=0; i<NUM_REPS; i++) {
@@ -156,7 +172,7 @@ const compose = (chords) => {
       // Set total sequence length.
       seq.totalQuantizedSteps = STEPS_PER_PROG * NUM_REPS;
 
-     return seq;
+      return seq;
     });
 }
 
