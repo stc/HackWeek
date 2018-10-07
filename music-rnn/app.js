@@ -212,7 +212,7 @@ function draw() {
   var y = lineHeight
   text("scene: " + state.scene, x, y);
   y += lineHeight
-  var chords = moodify(SCENES[state.scene], state.mood)
+  var chords = state.scene ? moodify(SCENES[state.scene], state.mood) : []
   text("chords: " + chords.join(' '), x, y);
   y += lineHeight
   text("tempo: " + state.tempo
