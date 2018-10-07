@@ -42,7 +42,7 @@ function moodify(chords, mood) {
       chords.map(c => c + 'm')
 }
 
-const state = {
+var state = {
   tempo: null,
   nextTempo: null,
   scene: null,
@@ -179,6 +179,11 @@ function initLoops() {
   state.composing = true
   Object.keys(SCENES).forEach(scene => {
     MOODS.forEach(mood => {
+      if (state.loops[scene]
+          && state.loops[scene][mood]
+          && state.loops[scene][mood].current) {
+        return
+      }
       composers.push(filteredCompose(moodify(SCENES[scene], mood), notRobotMusic))
       params.push({scene : scene, mood : mood})
     })
@@ -197,6 +202,7 @@ function initLoops() {
     state.pollHandler = setInterval(pollParams, 1000);
     state.composing = false
   })
+  .then(saveState)
 }
 
 
@@ -247,8 +253,23 @@ model.initialize().then(() => {
   document.getElementById('message').innerText = 'Done loading model.'
   mm.Player.tone.context.resume();
 
-  initLoops()
+  // unused, just to warm up RNN
+  compose(['A', 'B', 'C', 'D'])
+  .then(initLoops)
 });
+
+const LS_KEY = 'genmusic-state'
+
+function loadState() {
+  state = JSON.parse(localStorage.getItem(LS_KEY)) || state
+  state.started = false
+}
+
+loadState()
+
+function saveState() {
+  localStorage.setItem(LS_KEY, JSON.stringify(state))
+}
 
 function playSeq() {
   player.stop()
@@ -268,4 +289,5 @@ function playSeq() {
 
   player.start(loop.current, state.tempo)
   .then(playSeq)
+  .then(saveState)
 }
