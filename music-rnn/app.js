@@ -15,8 +15,10 @@ const STEPS_PER_PROG = 4 * STEPS_PER_CHORD;
 const NUM_REPS = 1;
 
 // Number of times to repeat the loop
-// XXX wait, how is this different than NUM_REPS
 const LOOP_REPS = 4;
+
+// Probability of repeating previous sequence instead of moving forward
+const REPEAT_CHANCE = 0.3
 
 // Set up Improv RNN model and player.
 const model = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/chord_pitches_improv');
@@ -180,8 +182,7 @@ function initLoops() {
   Object.keys(SCENES).forEach(scene => {
     MOODS.forEach(mood => {
       if (state.loops[scene]
-          && state.loops[scene][mood]
-          && state.loops[scene][mood].current) {
+          && state.loops[scene][mood]) {
         return
       }
       composers.push(filteredCompose(moodify(SCENES[scene], mood), notRobotMusic))
@@ -194,9 +195,9 @@ function initLoops() {
       const p = params[i]
       state.loops[p.scene] = state.loops[p.scene] || {}
       state.loops[p.scene][p.mood] = {
-        current: seq,
+        seqs: [seq],
         reps: 0,
-        loopCount: 1,
+        loopCount: 0,
       }
     })
     state.pollHandler = setInterval(pollParams, 1000);
@@ -276,18 +277,16 @@ function playSeq() {
   state.tempo = state.nextTempo
   const loop = state.loops[state.scene][state.mood]
   loop.reps++
-  if (loop.reps === LOOP_REPS - 1) {
+  if (loop.reps === LOOP_REPS - 1 && loop.loopCount + 1 === loop.seqs.length) {
     filteredCompose(moodify(SCENES[state.scene], state.mood), notRobotMusic)
-    .then(seq => loop.next = seq)
+    .then(seq => loop.seqs.push(seq))
   }
   if (loop.reps === LOOP_REPS + 1) {
     loop.reps = 1
-    loop.loopCount++
-    loop.current = loop.next
-    loop.next = null
+    loop.loopCount += (loop.loopCount === 0 || Math.random() > REPEAT_CHANCE) ? 1 : -1
   }
 
-  player.start(loop.current, state.tempo)
+  player.start(loop.seqs[loop.loopCount], state.tempo)
   .then(playSeq)
   .then(saveState)
 }
