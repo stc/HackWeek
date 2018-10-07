@@ -60,8 +60,8 @@ function resetSeq() {
 }
 
 // return false if a single note represents more than 60% of sequence
-const isRobotMusic = seq => Object.keys(seq.pitches)
-  .every(pitch => seq.pitches[pitch] < seq.notes.length * 0.6)
+const notRobotMusic = seq => Object.keys(seq.pitches)
+  .every(pitch => seq.pitches[pitch] < seq.notes.length * 0.5)
 
 function translateParams(params) {
 
@@ -179,7 +179,7 @@ function initLoops() {
   state.composing = true
   Object.keys(SCENES).forEach(scene => {
     MOODS.forEach(mood => {
-      composers.push(filteredCompose(moodify(SCENES[scene], mood), isRobotMusic))
+      composers.push(filteredCompose(moodify(SCENES[scene], mood), notRobotMusic))
       params.push({scene : scene, mood : mood})
     })
   })
@@ -256,7 +256,7 @@ function playSeq() {
   const loop = state.loops[state.scene][state.mood]
   loop.reps++
   if (loop.reps === LOOP_REPS - 1) {
-    filteredCompose(moodify(SCENES[state.scene], state.mood), isRobotMusic)
+    filteredCompose(moodify(SCENES[state.scene], state.mood), notRobotMusic)
     .then(seq => loop.next = seq)
   }
   if (loop.reps === LOOP_REPS + 1) {
