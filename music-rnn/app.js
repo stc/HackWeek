@@ -35,6 +35,8 @@ const SCENES = {
   factory: ['D', 'G', 'D', 'E'],
 }
 
+const MOODS = ['happy', 'sad',]
+
 function moodify(chords, mood) {
   return mood === 'happy' ? chords :
       chords.map(c => c + 'm')
@@ -49,14 +51,12 @@ const state = {
   nextChords: [],
   started: false,
   pollHandler: null,
-  loopRep: 0,
-  loopCount: 0,
+  loops: {}
 }
 
 function resetSeq() {
   state.nextSeq = null
   state.started = false
-  state.loopRep = 0
   state.nextChords = moodify(SCENES[state.scene], state.mood)
 }
 
@@ -76,15 +76,9 @@ function translateParams(params) {
   }
   state.nextTempo = Math.round(120 + (params.tempo * 100));
 
-  if (!state.nextSeq) {
-    filteredCompose(state.nextChords, isRobotMusic)
-    .then(seq => {
-      state.nextSeq = seq;
-      if (!state.started) {
-        state.started = true
-        playSeq()
-      }
-    })
+  if (!state.started) {
+    state.started = true
+    playSeq()
   }
 }
 
@@ -180,6 +174,31 @@ const compose = (chords) => {
     });
 }
 
+function initLoops() {
+  const composers = []
+  const params = []
+  Object.keys(SCENES).forEach(scene => {
+    MOODS.forEach(mood => {
+      composers.push(filteredCompose(moodify(SCENES[scene], mood), isRobotMusic))
+      params.push({scene : scene, mood : mood})
+    })
+  })
+  Promise.all(composers)
+  .then(seqs => {
+    seqs.forEach((seq, i) => {
+      const p = params[i]
+      state.loops[p.scene] = state.loops[p.scene] || {}
+      state.loops[p.scene][p.mood] = {
+        current: seq,
+        reps: 0,
+        loopCount: 0,
+      }
+    })
+    state.pollHandler = setInterval(pollParams, 1000);
+  })
+}
+
+
 // UI & Canvas elements
 
 function setup() {
@@ -197,13 +216,18 @@ function draw() {
   y += lineHeight
   var chordsText = state.chords.join(' ')
   var nextChordsText = state.nextChords.join(' ')
+
   text("chords: " + chordsText
       + (chordsText === nextChordsText ? '' : ' (next: ' + nextChordsText + ')'), x, y);
   y += lineHeight
   text("tempo: " + state.tempo
     + (state.tempo === state.nextTempo ? '' : ' (next: ' + state.nextTempo + ')'), x, y);
   y += lineHeight
-  text("loop: #" + state.loopCount + ' ' + state.loopRep + '/' + LOOP_REPS, x, y)
+
+  if (state.loops[state.scene]) {
+    const loop = state.loops[state.scene][state.mood]
+    text("loop: #" + loop.loopCount + ' ' + loop.reps + '/' + LOOP_REPS, x, y)
+  }
   fill(200,0,100);
   text("Click to stop", x, 300);
 }
@@ -219,28 +243,26 @@ function mouseReleased() {
 model.initialize().then(() => {
   document.getElementById('message').innerText = 'Done loading model.'
   mm.Player.tone.context.resume();
-  state.pollHandler = setInterval(pollParams, 1000);
-});
 
-function createPlayOnce(seq) {
-  return () => {
-    state.tempo = state.nextTempo
-    state.loopRep = state.loopRep % LOOP_REPS + 1
-    return player.start(seq, state.tempo)
-  }
-}
+  initLoops()
+});
 
 function playSeq() {
   player.stop()
-  console.log("Playing", state.nextSeq);
-  let seq = state.nextSeq;
-  state.chords = state.nextChords
-  state.nextSeq = null;
-  state.loopCount += 1
-  var playOnce = createPlayOnce(seq)
-  var prevPromise = playOnce()
-  for (var i = 0; i < LOOP_REPS - 1; ++i) {
-    prevPromise = prevPromise.then(playOnce)
+  state.tempo = state.nextTempo
+  const loop = state.loops[state.scene][state.mood]
+  loop.reps++
+  if (loop.reps === LOOP_REPS - 1) {
+    filteredCompose(moodify(SCENES[state.scene], state.mood), isRobotMusic)
+    .then(seq => loop.next = seq)
   }
-  prevPromise.then(playSeq)
+  if (loop.reps === LOOP_REPS + 1) {
+    loop.reps = 1
+    loop.loopCount++
+    loop.current = loop.next
+    loop.next = null
+  }
+
+  player.start(loop.current, state.tempo)
+  .then(playSeq)
 }
