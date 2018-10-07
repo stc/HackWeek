@@ -89,6 +89,7 @@ function pollParams() {
     "character" : 1, // 1 - 3
     "tempo" : 0.3,//Math.random(),  //0.29724919083554, // 0.0 - 1.0
     "intensity" : 0.3, // 0.0 - 1.0
+    // TODO: group sequences by number of notes, map to intensity value
     "scene": "mainmenu",
   };
 
@@ -285,6 +286,8 @@ function playSeq() {
     loop.reps = 1
     loop.loopCount += (loop.loopCount === 0 || Math.random() > REPEAT_CHANCE) ? 1 : -1
   }
+
+  // TODO: can we make progressive loops by dropping some notes and gradually adding them back
 
   player.start(loop.seqs[loop.loopCount], state.tempo)
   .then(playSeq)
