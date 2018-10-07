@@ -49,7 +49,8 @@ const state = {
   chords: [],
   started: false,
   pollHandler: null,
-  loops: {}
+  loops: {},
+  composing: true,
 }
 
 function resetSeq() {
@@ -175,6 +176,7 @@ const compose = (chords) => {
 function initLoops() {
   const composers = []
   const params = []
+  state.composing = true
   Object.keys(SCENES).forEach(scene => {
     MOODS.forEach(mood => {
       composers.push(filteredCompose(moodify(SCENES[scene], mood), isRobotMusic))
@@ -189,10 +191,11 @@ function initLoops() {
       state.loops[p.scene][p.mood] = {
         current: seq,
         reps: 0,
-        loopCount: 0,
+        loopCount: 1,
       }
     })
     state.pollHandler = setInterval(pollParams, 1000);
+    state.composing = false
   })
 }
 
@@ -222,8 +225,13 @@ function draw() {
   if (state.loops[state.scene]) {
     const loop = state.loops[state.scene][state.mood]
     text("loop: #" + loop.loopCount + ' ' + loop.reps + '/' + LOOP_REPS, x, y)
+    y += lineHeight
   }
   fill(200,0,100);
+  if (state.composing) {
+    y += lineHeight
+    text("HELLO. I AM REGULAR HUMAN PIANIST. PLEASE WAIT WHILE I COMPOSE.", x, y)
+  }
   text("Click to stop", x, 300);
 }
 
