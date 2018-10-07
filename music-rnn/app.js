@@ -43,21 +43,19 @@ function moodify(chords, mood) {
 }
 
 const state = {
-  nextSeq: null,
   tempo: null,
   nextTempo: null,
   scene: null,
   chords: [],
-  nextChords: [],
   started: false,
   pollHandler: null,
   loops: {}
 }
 
 function resetSeq() {
-  state.nextSeq = null
   state.started = false
-  state.nextChords = moodify(SCENES[state.scene], state.mood)
+
+  // TODO decide if we shall rewind current sequence
 }
 
 // return false if a single note represents more than 60% of sequence
@@ -214,11 +212,8 @@ function draw() {
   var y = lineHeight
   text("scene: " + state.scene, x, y);
   y += lineHeight
-  var chordsText = state.chords.join(' ')
-  var nextChordsText = state.nextChords.join(' ')
-
-  text("chords: " + chordsText
-      + (chordsText === nextChordsText ? '' : ' (next: ' + nextChordsText + ')'), x, y);
+  var chords = moodify(SCENES[state.scene], state.mood)
+  text("chords: " + chords.join(' '), x, y);
   y += lineHeight
   text("tempo: " + state.tempo
     + (state.tempo === state.nextTempo ? '' : ' (next: ' + state.nextTempo + ')'), x, y);
