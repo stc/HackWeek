@@ -278,13 +278,13 @@ function playSeq() {
   state.tempo = state.nextTempo
   const loop = state.loops[state.scene][state.mood]
   loop.reps++
-  if (loop.reps === LOOP_REPS - 1 && loop.loopCount + 1 === loop.seqs.length) {
-    filteredCompose(moodify(SCENES[state.scene], state.mood), notRobotMusic)
-    .then(seq => loop.seqs.push(seq))
-  }
   if (loop.reps === LOOP_REPS + 1) {
     loop.reps = 1
     loop.loopCount += (loop.loopCount === 0 || Math.random() > REPEAT_CHANCE) ? 1 : -1
+  }
+  if (loop.reps === 1 && loop.loopCount + 1 === loop.seqs.length) {
+    filteredCompose(moodify(SCENES[state.scene], state.mood), notRobotMusic)
+    .then(seq => loop.seqs.push(seq))
   }
 
   // TODO: can we make progressive loops by dropping some notes and gradually adding them back
