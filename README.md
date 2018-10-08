@@ -18,5 +18,7 @@ Sometimes the simple HTTP server doesn't fetch the fresh `music.json` or somethi
 
     open http://localhost:8000/music.json
 
+## MusicVAE UI 
 
-
+You can find a quick fork of https://teampieshop.github.io/latent-loops/ to explore MusicVAE's abilities interpolating between melodies with a nice ui.
+Go to [Readme](./latent-loops-ui/README.md) for setup instructions.
