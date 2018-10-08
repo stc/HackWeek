@@ -1,4 +1,4 @@
-var numInterpolations = 6; 
+var numInterpolations = 8; 
 
 var everyNote = 'C,C#,D,D#,E,F,F#,G,G#,A,A#,B,'.repeat(20).split(',').map( function(x,i) {
     return x + '' + Math.floor(i/12);
@@ -63,14 +63,9 @@ var MELODY2 = { notes: [
     {pitch: 69, quantizedStartStep: 31, quantizedEndStep: 32}
 ]};
 
-
-// go to https://goo.gl/magenta/musicvae-checkpoints to see more checkpoint urls
-// try the 500mb mel_big for a really smooth interpolation
 // var melodiesModelCheckPoint = 'https://storage.googleapis.com/download.magenta.tensorflow.org/models/music_vae/dljs/mel_big';
 var melodiesModelCheckPoint = './data/mel_small';
 
-// musicvae is trained on sequences of notes that are 2 bars, so 32 note per sequences.
-// Input needs to be the the same format
 var NUM_STEPS = 32; // DO NOT CHANGE.
 var interpolatedNoteSequences;
 
@@ -89,6 +84,11 @@ new musicvae.MusicVAE(melodiesModelCheckPoint)
 
 ///////////////////////////////
 //TONE.js setup for audio play back
+var reverb = new Tone.Convolver(
+'https://s3-us-west-2.amazonaws.com/s.cdpn.io/969699/hm2_000_ortf_48k.mp3').
+toMaster();
+reverb.wet.value = 0.15;
+
 var samplesPath = 'https://storage.googleapis.com/melody-mixer/piano/';
 var samples = {};
 var NUM_NOTES = 88;
@@ -99,7 +99,19 @@ for (var i = MIDI_START_NOTE; i < NUM_NOTES + MIDI_START_NOTE; i++) {
 
 var players = new Tone.Players(samples, function onPlayersLoaded(){
     console.log("Tone.js players loaded");
-}).toMaster();
+}).connect(reverb);
+
+var synth = new Tone.PolySynth(6, Tone.Synth, {
+            "oscillator" : {
+                "partials" : [100, 2, 3, 4],
+            },
+            "envelope"  : {
+                attack  : 0.001 ,
+                decay  : 0.01 ,
+                sustain  : 0.3 ,
+                release  : 1
+            }
+        }).connect(reverb);
 
 
 function playNote(midiNote, numNoteHolds){
@@ -108,6 +120,11 @@ function playNote(midiNote, numNoteHolds){
     player.fadeOut = 0.05;
     player.fadeIn = 0.01;
     player.start(Tone.now(), 0, duration);
+}
+
+function playSynth(midiNote,numNoteHolds) {
+    //var duration = Tone.Transport.toSeconds('8n') * (numNoteHolds || 1);
+    synth.triggerAttackRelease(Tone.Frequency(midiNote, "midi"), "8n");
 }
 
 var sequenceIndex = -1;
@@ -131,18 +148,10 @@ function setup() {
 let count = 0;
 
 function draw() {
-    //here we calculate the percentage through melodies, between 0-1
+    var index = if(mouseX>0 && mouseX < width) ceil(map(mouseX,0,width,0,numInterpolations-1));
     var totalPlayTime = (Tone.Transport.bpm.value * NUM_STEPS * numInterpolations) / 1000;
-    //var percent = Tone.Transport.seconds / totalPlayTime % 1;
-    //var percent = constrain(mouseX / width, 0, 0.99);
+    var percent = (millis() % 4000 / 4000 / numInterpolations) + (TILE_SIZE / WIDTH * index);
     
-    var percent = count/100 + constrain(mouseX / width, 0, 0.99);
-    count+=0.1;
-    if(count>10) count = 0;
-
-    
-    //here we calculate the index of interpolatedNoteSequences
-    //and currStepIndex is the note between 0-31 of that playback
     var currSequenceIndex = Math.floor(percent * numInterpolations);
     var currStepIndex = Math.floor((percent * numInterpolations - currSequenceIndex) * NUM_STEPS);
     function isCurrentStep(note) {
@@ -154,7 +163,9 @@ function draw() {
             var notes = interpolatedNoteSequences[currSequenceIndex].notes.filter(isCurrentStep);
             notes.forEach(function(note) {
                 var noteDuration = note.quantizedEndStep - note.quantizedStartStep;
-                playNote(note.pitch, noteDuration);
+                //playNote(note.pitch, noteDuration);
+                playSynth(note.pitch);
+                print(note.pitch);
             });
         }
         sequenceIndex = currSequenceIndex;
