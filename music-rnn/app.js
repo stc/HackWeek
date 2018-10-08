@@ -18,7 +18,7 @@ const NUM_REPS = 1;
 const LOOP_REPS = 4;
 
 // Probability of repeating previous sequence instead of moving forward
-const REPEAT_CHANCE = 0.3
+const REPEAT_CHANCE = 0.1
 
 // Set up Improv RNN model and player.
 const model = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/chord_pitches_improv');
