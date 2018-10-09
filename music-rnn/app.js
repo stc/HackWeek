@@ -293,7 +293,9 @@ var synth = new Tone.PolySynth(6, Tone.Synth, {
 synth.set("detune", -1200);
 
 function playSynth(note, r) {
-  Math.log()
+  if (note.quantizedStartStep % 4 !== 0) {
+    return
+  }
   if (note.quantizedStartStep % 2 === 0) {
     synth.volume.value = -8
   }
