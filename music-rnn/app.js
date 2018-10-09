@@ -31,7 +31,7 @@ function printMe(e) {
 const SCENES = {
   base: ['A', 'D', 'C', 'E'],
   mainmenu: ['D', 'G', 'C', 'E'],
-  level: ['G', 'A', 'D', 'A'],
+  level: ['E', 'A', 'E', 'B'],
   debrief: ['C', 'F', 'C', 'G'],
   explore: ['A', 'D', 'A', 'E'],
   factory: ['D', 'G', 'D', 'E'],
@@ -47,6 +47,7 @@ function moodify(chords, mood) {
 var state = {
   tempo: null,
   nextTempo: null,
+  intensity: null,
   scene: null,
   chords: [],
   started: false,
@@ -76,6 +77,7 @@ function translateParams(params) {
     resetSeq()
   }
   state.nextTempo = Math.round(120 + (params.tempo * 100));
+  state.intensity = params.intensity || 0.1
 
   if (!state.started) {
     state.started = true
@@ -221,6 +223,8 @@ function draw() {
   text("tempo: " + state.tempo
     + (state.tempo === state.nextTempo ? '' : ' (next: ' + state.nextTempo + ')'), x, y);
   y += lineHeight
+  text("intensity: " + state.intensity, x, y);
+  y += lineHeight
 
   if (state.loops[state.scene]) {
     const loop = state.loops[state.scene][state.mood]
@@ -326,7 +330,7 @@ function playPiano(note, r) {
   player.start(Tone.now(), 0, 1);
 }
 function playNote(note, r) {
-  // const loop = state.loops[state.scene][state.mood]
+  const loop = state.loops[state.scene][state.mood]
   // if (loop.reps === 1 && note.quantizedStartStep % 16 !== 0) {
   //   return
   // }
@@ -339,7 +343,17 @@ function playNote(note, r) {
   // if (loop.reps === 4 && note.quantizedStartStep % 2 !== 0) {
   //   return
   // }
-  // console.log(note)
+  if (state.scene === 'level'
+      && state.intensity < 0.2
+      && note.quantizedStartStep % 8 !== 0) {
+    return
+  }
+  if (state.scene === 'level'
+      && state.intensity < 0.4
+      && note.quantizedStartStep % 4 !== 0) {
+    return
+  }
+  console.log(note)
   playPiano(note, r)
   playSynth(note, r)
 }
