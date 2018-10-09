@@ -48,6 +48,7 @@ var state = {
   tempo: null,
   nextTempo: null,
   intensity: null,
+  character: 1,
   scene: null,
   chords: [],
   started: false,
@@ -78,6 +79,7 @@ function translateParams(params) {
   }
   state.nextTempo = Math.round(120 + (params.tempo * 100));
   state.intensity = params.intensity || 0.1
+  state.character = params.character || 1
 
   if (!state.started) {
     state.started = true
@@ -142,21 +144,25 @@ const compose = (chords) => {
       for (var i=0; i<NUM_REPS; i++) {
         // Add the bass progression.
         seq.notes.push({
+          instrument: 1,
           pitch: 36 + roots[0],
           quantizedStartStep: i*STEPS_PER_PROG,
           quantizedEndStep: i*STEPS_PER_PROG + STEPS_PER_CHORD
         });
         seq.notes.push({
+          instrument: 1,
           pitch: 36 + roots[1],
           quantizedStartStep: i*STEPS_PER_PROG + STEPS_PER_CHORD,
           quantizedEndStep: i*STEPS_PER_PROG + 2*STEPS_PER_CHORD
         });
         seq.notes.push({
+          instrument: 1,
           pitch: 36 + roots[2],
           quantizedStartStep: i*STEPS_PER_PROG + 2*STEPS_PER_CHORD,
           quantizedEndStep: i*STEPS_PER_PROG + 3*STEPS_PER_CHORD
         });
         seq.notes.push({
+          instrument: 1,
           pitch: 36 + roots[3],
           quantizedStartStep: i*STEPS_PER_PROG + 3*STEPS_PER_CHORD,
           quantizedEndStep: i*STEPS_PER_PROG + 4*STEPS_PER_CHORD
@@ -225,6 +231,8 @@ function draw() {
   y += lineHeight
   text("intensity: " + state.intensity, x, y);
   y += lineHeight
+  text("character: " + state.character, x, y);
+  y += lineHeight
 
   if (state.loops[state.scene]) {
     const loop = state.loops[state.scene][state.mood]
@@ -259,7 +267,7 @@ model.initialize().then(() => {
 const LS_KEY = 'genmusic-state'
 
 function loadState() {
-  //state = JSON.parse(localStorage.getItem(LS_KEY)) || state
+  // state = JSON.parse(localStorage.getItem(LS_KEY)) || state
   state.started = false
 }
 
@@ -291,71 +299,67 @@ var synth = new Tone.PolySynth(6, Tone.Synth, {
   }
 }).toMaster();
 synth.set("detune", -1200);
+var bassSynth = new Tone.PolySynth(6, Tone.Synth, {
+  envelope: {
+      attack: 2,
+      decay: 3,
+      sustain: 2,
+      release: 16,
+  }
+}).toMaster();
+bassSynth.set("detune", -1200);
 
 function playSynth(note, r) {
-  if (note.quantizedStartStep % 4 !== 0) {
-    return
-  }
+  var offset = 12
+  const s = note.instrument === 1 ? bassSynth : synth
+  const baseVolume = state.character === 2 ?
+      -4 : state.character === 3 ? 4 : 0
   if (note.quantizedStartStep % 2 === 0) {
-    synth.volume.value = -8
+    s.volume.value = baseVolume - 8
   }
   if (note.quantizedStartStep % 4 === 0) {
-    synth.volume.value = -6
+    s.volume.value = baseVolume - 6
   }
   if (note.quantizedStartStep % 8 === 0) {
-    synth.volume.value = -4
+    s.volume.value = baseVolume - 4
   }
   if (note.quantizedStartStep % 16 === 0) {
-    synth.volume.value = -2
+    s.volume.value = baseVolume - 2
   }
-  synth.triggerAttackRelease(Tone.Frequency(r._val, 'midi'), '4n');
+  s.triggerAttackRelease(Tone.Frequency(r._val + offset, 'midi'), '4n');
 }
 function playPiano(note, r) {
   var player = players.get(r._val);
   player.fadeOut = 0.05;
   player.fadeIn = 0.01;
-
+  const baseVolume = state.character === 2 ?
+      4 : state.character === 3 ? -4 : 0
   if (note.quantizedStartStep % 2 === 0) {
-    player.volume.value = -18
+    player.volume.value = baseVolume - 18
   }
   if (note.quantizedStartStep % 4 === 0) {
-    player.volume.value = -16
+    player.volume.value = baseVolume - 16
   }
   if (note.quantizedStartStep % 8 === 0) {
-    player.volume.value = -14
+    player.volume.value = baseVolume - 14
   }
   if (note.quantizedStartStep % 16 === 0) {
-    player.volume.value = -12
+    player.volume.value = baseVolume - 12
   }
-
-//  player.volume.value = -12
   player.start(Tone.now(), 0, 1);
 }
 function playNote(note, r) {
   const loop = state.loops[state.scene][state.mood]
-  // if (loop.reps === 1 && note.quantizedStartStep % 16 !== 0) {
-  //   return
-  // }
-  // if (loop.reps === 2 && note.quantizedStartStep % 8 !== 0) {
-  //   return
-  // }
-  // if (loop.reps === 3 && note.quantizedStartStep % 4 !== 0) {
-  //   return
-  // }
-  // if (loop.reps === 4 && note.quantizedStartStep % 2 !== 0) {
-  //   return
-  // }
-  if (state.scene === 'level'
-      && state.intensity < 0.2
-      && note.quantizedStartStep % 8 !== 0) {
+  if (state.intensity < 0.25 && note.quantizedStartStep % 16 !== 0) {
     return
   }
-  if (state.scene === 'level'
-      && state.intensity < 0.4
-      && note.quantizedStartStep % 4 !== 0) {
+  if (state.intensity < 0.5 && note.quantizedStartStep % 8 !== 0) {
     return
   }
-  console.log(note)
+  if (state.intensity < 0.75 && note.quantizedStartStep % 4 !== 0) {
+    return
+  }
+//  console.log(note)
   playPiano(note, r)
   playSynth(note, r)
 }
