@@ -29,8 +29,8 @@ function printMe(e) {
 }
 
 const SCENES = {
-  mainmenu: ['A', 'D', 'C', 'E'],
-  base: ['D', 'G', 'C', 'E'],
+  base: ['A', 'D', 'C', 'E'],
+  mainmenu: ['D', 'G', 'C', 'E'],
   level: ['G', 'A', 'D', 'A'],
   debrief: ['C', 'F', 'C', 'G'],
   explore: ['A', 'D', 'A', 'E'],
@@ -227,11 +227,11 @@ function draw() {
     text("loop: #" + loop.loopCount + ' ' + loop.reps + '/' + LOOP_REPS, x, y)
     y += lineHeight
   }
-  fill(200,0,100);
   if (state.composing) {
     y += lineHeight
     text("HELLO. I AM REGULAR HUMAN PIANIST. PLEASE WAIT WHILE I COMPOSE.", x, y)
   }
+  fill(200,0,100);
   text("Click to stop", x, 300);
 }
 
@@ -255,7 +255,7 @@ model.initialize().then(() => {
 const LS_KEY = 'genmusic-state'
 
 function loadState() {
-  state = JSON.parse(localStorage.getItem(LS_KEY)) || state
+  //state = JSON.parse(localStorage.getItem(LS_KEY)) || state
   state.started = false
 }
 
