@@ -140,29 +140,21 @@ const compose = (chords) => {
       for (var i=0; i<NUM_REPS; i++) {
         // Add the bass progression.
         seq.notes.push({
-          instrument: 10,
-          program: 32,
           pitch: 36 + roots[0],
           quantizedStartStep: i*STEPS_PER_PROG,
           quantizedEndStep: i*STEPS_PER_PROG + STEPS_PER_CHORD
         });
         seq.notes.push({
-          instrument: 10,
-          program: 32,
           pitch: 36 + roots[1],
           quantizedStartStep: i*STEPS_PER_PROG + STEPS_PER_CHORD,
           quantizedEndStep: i*STEPS_PER_PROG + 2*STEPS_PER_CHORD
         });
         seq.notes.push({
-          instrument: 10,
-          program: 32,
           pitch: 36 + roots[2],
           quantizedStartStep: i*STEPS_PER_PROG + 2*STEPS_PER_CHORD,
           quantizedEndStep: i*STEPS_PER_PROG + 3*STEPS_PER_CHORD
         });
         seq.notes.push({
-          instrument: 10,
-          program: 32,
           pitch: 36 + roots[3],
           quantizedStartStep: i*STEPS_PER_PROG + 3*STEPS_PER_CHORD,
           quantizedEndStep: i*STEPS_PER_PROG + 4*STEPS_PER_CHORD
@@ -263,7 +255,7 @@ model.initialize().then(() => {
 const LS_KEY = 'genmusic-state'
 
 function loadState() {
-  state = JSON.parse(localStorage.getItem(LS_KEY)) || state
+//  state = JSON.parse(localStorage.getItem(LS_KEY)) || state
   state.started = false
 }
 
@@ -271,6 +263,45 @@ loadState()
 
 function saveState() {
   localStorage.setItem(LS_KEY, JSON.stringify(state))
+}
+
+
+var samplesPath = "https://storage.googleapis.com/melody-mixer/piano/"
+var samples = {};
+var NUM_NOTES = 88;
+var MIDI_START_NOTE = 21;
+for (var i = MIDI_START_NOTE; i < NUM_NOTES + MIDI_START_NOTE; i++) {
+  samples[i] = samplesPath + i + '.mp3';
+}
+
+var players = new Tone.Players(samples, function onPlayersLoaded(){
+    console.log("Tone.js players loaded");
+}).toMaster();
+
+var synth = new Tone.PolySynth(6, Tone.Synth, {
+  envelope: {
+      attack: 2,
+      decay: 3,
+      sustain: 2,
+      release: 4,
+  }
+}).toMaster();
+synth.set("detune", -1200);
+
+function playSynth(note, r) {
+  synth.triggerAttackRelease(Tone.Frequency(r._val, 'midi'), '4n');
+}
+function playPiano(note, r) {
+  var player = players.get(r._val);
+  player.fadeOut = 0.05;
+  player.fadeIn = 0.01;
+  player.volume.value = -12
+  player.start(Tone.now(), 0, 1);
+//  console.log(`Playing ${midiNote}`);
+}
+function playNote(note, r) {
+  playPiano(note, r)
+  playSynth(note, r)
 }
 
 function playSeq() {
@@ -289,7 +320,7 @@ function playSeq() {
 
   // TODO: can we make progressive loops by dropping some notes and gradually adding them back
 
-  player.start(loop.seqs[loop.loopCount], state.tempo)
+  player.start(loop.seqs[loop.loopCount], state.tempo, playNote)
   .then(playSeq)
   .then(saveState)
 }

@@ -7,22 +7,6 @@
         ("undefined" != typeof window ? window : "undefined" != typeof global ? global : "undefined" != typeof self ? self : this).mm = t()
     }
 }(function() {
-	///////////////////////////////
-//TONE.js setup for audio play back
-// var samplesPath = './data/piano/';
-var samplesPath = "https://storage.googleapis.com/melody-mixer/piano/"
-var samples = {};
-var NUM_NOTES = 88;
-var MIDI_START_NOTE = 21;
-for (var i = MIDI_START_NOTE; i < NUM_NOTES + MIDI_START_NOTE; i++) {
-    samples[i] = samplesPath + i + '.mp3';
-}
-
-var players = new Tone.Players(samples, function onPlayersLoaded(){
-    console.log("Tone.js players loaded");
-    // Tone.startMobile();
-}).toMaster();
-
     var define, module, exports;
     return function o(s, a, u) {
         function c(n, t) {
@@ -20185,7 +20169,9 @@ var players = new Tone.Players(samples, function onPlayersLoaded(){
                     function t() {
                         this.synths = new Map, o.Transport.bpm.value = 60
                     }
-                    return t.prototype.start = function(e, t) {
+                    var callback
+                    return t.prototype.start = function(e, t, cb) {
+                        callback = cb
                         var n = this;
                         if (i.sequences.isQuantizedSequence(e)) e = i.sequences.unquantizeSequence(e, t);
                         else if (t) throw new Error("Cannot specify a `qpm` for a non-quantized sequence.");
@@ -20203,15 +20189,8 @@ var players = new Tone.Players(samples, function onPlayersLoaded(){
                             var n = a.get(e.pitch);
                             _[n](t)
                         } else {
-                            var r = new o.Frequency(e.pitch, "midi"),
-                                i = e.endTime - e.startTime;
-                            //this.getSynth(e.instrument, e.program).triggerAttackRelease(r, i, t)
-                            // console.log(r);
-                            var player = players.get(r._val);
-    						player.fadeOut = 0.05;
-    						player.fadeIn = 0.01;
-    						// console.log(`Playing ${midiNote}`);
-                            player.start(Tone.now(), 0, 1);
+                            var r = new o.Frequency(e.pitch, "midi")
+                            callback(e, r)
                         }
                     }, t.prototype.getSynth = function(t, e) {
                         if (this.synths.has(t)) return this.synths.get(t);
