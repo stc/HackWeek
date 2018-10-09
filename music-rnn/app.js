@@ -255,7 +255,7 @@ model.initialize().then(() => {
 const LS_KEY = 'genmusic-state'
 
 function loadState() {
-//  state = JSON.parse(localStorage.getItem(LS_KEY)) || state
+  state = JSON.parse(localStorage.getItem(LS_KEY)) || state
   state.started = false
 }
 
@@ -289,17 +289,57 @@ var synth = new Tone.PolySynth(6, Tone.Synth, {
 synth.set("detune", -1200);
 
 function playSynth(note, r) {
+  Math.log()
+  if (note.quantizedStartStep % 2 === 0) {
+    synth.volume.value = -8
+  }
+  if (note.quantizedStartStep % 4 === 0) {
+    synth.volume.value = -6
+  }
+  if (note.quantizedStartStep % 8 === 0) {
+    synth.volume.value = -4
+  }
+  if (note.quantizedStartStep % 16 === 0) {
+    synth.volume.value = -2
+  }
   synth.triggerAttackRelease(Tone.Frequency(r._val, 'midi'), '4n');
 }
 function playPiano(note, r) {
   var player = players.get(r._val);
   player.fadeOut = 0.05;
   player.fadeIn = 0.01;
-  player.volume.value = -12
+
+  if (note.quantizedStartStep % 2 === 0) {
+    player.volume.value = -18
+  }
+  if (note.quantizedStartStep % 4 === 0) {
+    player.volume.value = -16
+  }
+  if (note.quantizedStartStep % 8 === 0) {
+    player.volume.value = -14
+  }
+  if (note.quantizedStartStep % 16 === 0) {
+    player.volume.value = -12
+  }
+
+//  player.volume.value = -12
   player.start(Tone.now(), 0, 1);
-//  console.log(`Playing ${midiNote}`);
 }
 function playNote(note, r) {
+  // const loop = state.loops[state.scene][state.mood]
+  // if (loop.reps === 1 && note.quantizedStartStep % 16 !== 0) {
+  //   return
+  // }
+  // if (loop.reps === 2 && note.quantizedStartStep % 8 !== 0) {
+  //   return
+  // }
+  // if (loop.reps === 3 && note.quantizedStartStep % 4 !== 0) {
+  //   return
+  // }
+  // if (loop.reps === 4 && note.quantizedStartStep % 2 !== 0) {
+  //   return
+  // }
+  // console.log(note)
   playPiano(note, r)
   playSynth(note, r)
 }
