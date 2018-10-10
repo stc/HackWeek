@@ -18,7 +18,7 @@ const NUM_REPS = 1;
 const LOOP_REPS = 4;
 
 // Probability of repeating previous sequence instead of moving forward
-const REPEAT_CHANCE = 0.1
+const REPEAT_CHANCE = 0.0
 
 // Set up Improv RNN model and player.
 const model = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/chord_pitches_improv');
@@ -143,30 +143,31 @@ const compose = (chords) => {
       const roots = chords.map(mm.chords.ChordSymbols.root);
       for (var i=0; i<NUM_REPS; i++) {
         // Add the bass progression.
-        seq.notes.push({
-          instrument: 1,
-          pitch: 36 + roots[0],
-          quantizedStartStep: i*STEPS_PER_PROG,
-          quantizedEndStep: i*STEPS_PER_PROG + STEPS_PER_CHORD
-        });
-        seq.notes.push({
-          instrument: 1,
-          pitch: 36 + roots[1],
-          quantizedStartStep: i*STEPS_PER_PROG + STEPS_PER_CHORD,
-          quantizedEndStep: i*STEPS_PER_PROG + 2*STEPS_PER_CHORD
-        });
-        seq.notes.push({
-          instrument: 1,
-          pitch: 36 + roots[2],
-          quantizedStartStep: i*STEPS_PER_PROG + 2*STEPS_PER_CHORD,
-          quantizedEndStep: i*STEPS_PER_PROG + 3*STEPS_PER_CHORD
-        });
-        seq.notes.push({
-          instrument: 1,
-          pitch: 36 + roots[3],
-          quantizedStartStep: i*STEPS_PER_PROG + 3*STEPS_PER_CHORD,
-          quantizedEndStep: i*STEPS_PER_PROG + 4*STEPS_PER_CHORD
-        });
+
+        for (var j=0; j<4; j++) {
+          seq.notes.push({
+            instrument: 1,
+            pitch: 36 + roots[0],
+            quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
+            quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
+          });
+        }
+        for (var j=0; j<16; j++) {
+          seq.notes.push({
+            instrument: 2,
+            pitch: 36 + roots[0],
+            quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD/4,
+            quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD/4
+          });
+        }
+        // for (var j=0; j<16; j++) {
+        //   seq.notes.push({
+        //     instrument: 3,
+        //     pitch: 36 + roots[0],
+        //     quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD/4 - 4,
+        //     quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD/4 - 4
+        //   });
+        // }
       }
 
       // Set total sequence length.
@@ -293,9 +294,9 @@ var players = new Tone.Players(samples, function onPlayersLoaded(){
 var synth = new Tone.PolySynth(6, Tone.Synth, {
   envelope: {
       attack: 2,
-      decay: 3,
-      sustain: 2,
-      release: 4,
+      decay: 1,
+      sustain: 1,
+      release: 1,
   }
 }).toMaster();
 synth.set("detune", -1200);
@@ -309,9 +310,18 @@ var bassSynth = new Tone.PolySynth(6, Tone.Synth, {
 }).toMaster();
 bassSynth.set("detune", -1200);
 
+var kickDrumSynth = new Tone.MembraneSynth().toMaster();
+var highHatSynth = new Tone.MetalSynth({
+    "envelope"  : {
+        attack  : 0.001 ,
+        decay  : 1 ,
+        release  : 1
+    }
+    }).toMaster();
+
 function playSynth(note, r) {
   var offset = 12
-  const s = note.instrument === 1 ? bassSynth : synth
+  const s = synth   //note.instrument === 1 ? bassSynth : synth
   const baseVolume = state.character === 2 ?
       -4 : state.character === 3 ? 4 : 0
   if (note.quantizedStartStep % 2 === 0) {
@@ -326,6 +336,8 @@ function playSynth(note, r) {
   if (note.quantizedStartStep % 16 === 0) {
     s.volume.value = baseVolume - 2
   }
+  var duration = note.quantizedEndStep - note.quantizedStartStep
+  console.log(duration)
   s.triggerAttackRelease(Tone.Frequency(r._val + offset, 'midi'), '4n');
 }
 function playPiano(note, r) {
@@ -350,6 +362,20 @@ function playPiano(note, r) {
 }
 function playNote(note, r) {
   const loop = state.loops[state.scene][state.mood]
+
+  if (note.instrument === 2 && Math.random() < 1) {
+    kickDrumSynth.volume.value = 8
+    kickDrumSynth.triggerAttackRelease('C1', '2n');
+    return
+  }
+
+  if (note.instrument === 3 && Math.random() < 0.4) {
+    highHatSynth.volume.value = -16
+    highHatSynth.triggerAttackRelease('8n');
+    return
+  }
+
+
   if (state.intensity < 0.25 && note.quantizedStartStep % 16 !== 0) {
     return
   }
