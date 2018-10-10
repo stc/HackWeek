@@ -127,6 +127,7 @@ const compose = (chords) => {
     notes: [],
     totalQuantizedSteps: 1,
     pitches: {},
+    uniqPitches: [],
   };
 
   return model.continueSequence(seq, STEPS_PER_PROG + (NUM_REPS-1)*STEPS_PER_PROG - 1, 0.75, chords)
@@ -138,6 +139,9 @@ const compose = (chords) => {
         note.quantizedEndStep += 1;
         note.instrument = 1
         seq.notes.push(note);
+        if (seq.uniqPitches[seq.uniqPitches.length - 1] !== note.pitch) {
+          seq.uniqPitches.push(note.pitch)
+        }
       });
       console.log('composition ready', seq.pitches)
 
@@ -156,7 +160,7 @@ const compose = (chords) => {
         for (var j=0; j<4; j++) {
           seq.notes.push({
             instrument: 3,
-            pitch: seq.notes[j].pitch + 12,
+            pitch: seq.uniqPitches[j%seq.uniqPitches.length] + 12,
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
           });
