@@ -1,14 +1,19 @@
-var MOOD = "calm";
+var MOOD = "soft";
 var INTENSITY = 1;
 
 var numInterpolations = 12; 
 var pitches1, pitches2;
 
-if(MOOD === "calm") {
+if(MOOD === "soft") {
     pitches2 = [ 48, 50, 55, 57, 58, 60, 62, 63, 65, 67, 72, 84 ];
     pitches1 = [ 50, 64, 65, 69, 70 ];
 }
-if(MOOD == "bright") {
+if(MOOD == "vivid") {
+    pitches2 = [ 67, 69, 71, 74, 76, 79, 81, 83, 84, 85, 86 ];
+    pitches1 = [ 53, 57, 58, 60, 62, 64 ];
+}
+
+if(MOOD == "dark") {
     pitches2 = [ 67, 69, 71, 74, 76, 79, 81, 83, 84, 85, 86 ];
     pitches1 = [ 53, 57, 58, 60, 62, 64 ];
 }
@@ -67,7 +72,6 @@ var synth1 = new Tone.PolySynth(6, Tone.Synth, {
                 sustain  : 0.1 ,
                 release  : 2
             },
-
         }).connect(chorus);
 
 var synth2 = new Tone.PolySynth(6, Tone.Synth, {
