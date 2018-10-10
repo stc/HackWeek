@@ -299,7 +299,7 @@ var synth = new Tone.PolySynth(6, Tone.Synth, {
       attack: 2,
       decay: 1,
       sustain: 1,
-      release: 1,
+      release: 8,
   }
 }).toMaster();
 synth.set("detune", -1200);
@@ -330,20 +330,15 @@ const VOLUMES = [
 ]
 
 function playSynth(note, r) {
-  var offset = 12
-  const s = synth   //note.instrument === 1 ? bassSynth : synth
+  var offset = note.instrument === 1 ? 36 : 0
+  const s = note.instrument === 1 ? bassSynth : synth
   const baseVolume = VOLUMES[state.character].synth
-  if (isAt(16)(note)) {
-    s.volume.value = baseVolume - 8
-  }
-  if (isAt(8)(note)) {
-    s.volume.value = baseVolume - 6
-  }
-  if (isAt(4)(note)) {
-    s.volume.value = baseVolume - 4
-  }
   if (isAt(2)(note)) {
     s.volume.value = baseVolume - 2
+  } else if (isAt(4)(note) && Math.random() < state.intensity) {
+    s.volume.value = baseVolume - 8
+  } else {
+    return
   }
   var duration = note.quantizedEndStep - note.quantizedStartStep
   //console.log(duration)
