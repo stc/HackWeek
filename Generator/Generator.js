@@ -90,8 +90,8 @@ var synthDrum = new Tone.MembraneSynth().toMaster();
 var synthHigh = new Tone.MetalSynth({
     "envelope"  : {
         attack  : 0.001 ,
-        decay  : 0.1 ,
-        release  : 0.1
+        decay  : 1 ,
+        release  : 1
     }
     }).connect(phaser);
 
@@ -145,11 +145,11 @@ var stepIndex = -1;
 function playSequence() {
     //here we calculate the percentage through melodies, between 0-1
     var totalPlayTime = (Tone.Transport.bpm.value * NUM_STEPS * numInterpolations) / 1000;
-    var percent = Tone.Transport.seconds / totalPlayTime % 1;
+    //var percent = Tone.Transport.seconds / totalPlayTime % 1;
 
     // INTENSITY should be set between 0 - (1-loopLen)
     if(INTENSITY + loopLen >= 1 ) INTENSITY = INTENSITY - loopLen;
-    //var percent = (Date.now() % 6000 / 6000 / numInterpolations) + INTENSITY;
+    var percent = (Date.now() % 6000 / 6000 / numInterpolations) + INTENSITY;
 
     //here we calculate the index of interpolatedNoteSequences
     //and currStepIndex is the note between 0-31 of that playback
@@ -164,23 +164,24 @@ function playSequence() {
             var notes1 = interpolatedNoteSequences1[currSequenceIndex].notes.filter(isCurrentStep);
             notes1.forEach(function(note) {
                 var noteDuration = note.quantizedEndStep - note.quantizedStartStep;
-                playSynth1(note.pitch);  
+                //playSynth1(note.pitch);  
                 var r= Math.random(); 
                 if (r > 0.7) {
                     synthHigh.resonance = Math.random()*2000  + 500;
                     synthHigh.volume.value = - (Math.random() * 100) - 16;
-                    synthHigh.triggerAttackRelease("16n");
+                    synthHigh.triggerAttackRelease("16n", "16n");
                 }
 
             });
             var notes2 = interpolatedNoteSequences2[currSequenceIndex].notes.filter(isCurrentStep);
             notes2.forEach(function(note) {
                 var noteDuration = note.quantizedEndStep - note.quantizedStartStep;
-                playSynth2(note.pitch);
+                //playSynth2(note.pitch);
 
                 var r= Math.random(); 
                 if (r > 0.8) {
                     synthDrum.triggerAttackRelease("C2", "8n");
+                    synthDrum.triggerAttackRelease("C2", "8n", "4n");
                 }
                 
             });
