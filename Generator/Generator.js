@@ -1,4 +1,4 @@
-var MOOD = "soft";
+var MOOD = "vivid";
 var INTENSITY = 1;
 
 var numInterpolations = 12; 
@@ -14,8 +14,8 @@ if(MOOD == "vivid") {
 }
 
 if(MOOD == "dark") {
-    pitches2 = [ 67, 69, 71, 74, 76, 79, 81, 83, 84, 85, 86 ];
-    pitches1 = [ 53, 57, 58, 60, 62, 64 ];
+    pitches2 = [ 48, 49, 54, 55, 56 ];
+    pitches1 = [ 36, 37, 45, 46 ];
 }
 
 var loopLen = 1 / numInterpolations;
@@ -145,11 +145,11 @@ var stepIndex = -1;
 function playSequence() {
     //here we calculate the percentage through melodies, between 0-1
     var totalPlayTime = (Tone.Transport.bpm.value * NUM_STEPS * numInterpolations) / 1000;
-    //var percent = Tone.Transport.seconds / totalPlayTime % 1;
+    var percent = Tone.Transport.seconds / totalPlayTime % 1;
 
     // INTENSITY should be set between 0 - (1-loopLen)
     if(INTENSITY + loopLen >= 1 ) INTENSITY = INTENSITY - loopLen;
-    var percent = (Date.now() % 6000 / 6000 / numInterpolations) + INTENSITY;
+    //var percent = (Date.now() % 6000 / 6000 / numInterpolations) + INTENSITY;
 
     //here we calculate the index of interpolatedNoteSequences
     //and currStepIndex is the note between 0-31 of that playback
