@@ -147,7 +147,7 @@ const compose = (chords) => {
         for (var j=0; j<4; j++) {
           seq.notes.push({
             instrument: 1,
-            pitch: 36 + roots[0],
+            pitch: 36 + roots[j],
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
           });
@@ -305,10 +305,10 @@ var synth = new Tone.PolySynth(6, Tone.Synth, {
 synth.set("detune", -1200);
 var bassSynth = new Tone.PolySynth(6, Tone.Synth, {
   envelope: {
-      attack: 2,
-      decay: 3,
-      sustain: 2,
-      release: 16,
+    attack: 2,
+    decay: 3,
+    sustain: 2,
+    release: 16,
   }
 }).toMaster();
 bassSynth.set("detune", -1200);
