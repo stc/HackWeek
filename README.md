@@ -22,3 +22,8 @@ Sometimes the simple HTTP server doesn't fetch the fresh `music.json` or somethi
 
 You can find a quick fork of https://teampieshop.github.io/latent-loops/ to explore MusicVAE's abilities interpolating between melodies with a nice ui.
 Go to [Readme](./latent-loops-ui/README.md) for setup instructions.
+
+## Generator 
+
+Headless VAE based melody interpolator, based on [this](https://magenta.tensorflow.org/music-vae). To be used with the video-background-music generator app. To test: launch local server and open index.html
+ 
