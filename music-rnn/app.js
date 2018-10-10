@@ -152,22 +152,22 @@ const compose = (chords) => {
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
           });
         }
-        for (var j=0; j<16; j++) {
+        for (var j=0; j<STEPS_PER_PROG/4; j++) {
           seq.notes.push({
             instrument: 2,
             program: 1,
             pitch: 36 + roots[0],
-            quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD/4,
-            quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD/4
+            quantizedStartStep: i*STEPS_PER_PROG + j * 4,
+            quantizedEndStep: i*STEPS_PER_PROG + j * 4 + 1
           });
         }
-        for (var j=0; j<16; j++) {
+        for (var j=0; j<STEPS_PER_PROG/4; j++) {
           seq.notes.push({
             instrument: 2,
             program: 2,
             pitch: 36 + roots[0],
-            quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD/4 + 4,
-            quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD/4 + 6
+            quantizedStartStep: i*STEPS_PER_PROG + j * 4,
+            quantizedEndStep: i*STEPS_PER_PROG + j * 4 + 1
           });
         }
       }
@@ -327,20 +327,20 @@ function playSynth(note, r) {
   const s = synth   //note.instrument === 1 ? bassSynth : synth
   const baseVolume = state.character === 2 ?
       -4 : state.character === 3 ? 4 : 0
-  if (note.quantizedStartStep % 2 === 0) {
+  if (isAt(16)(note)) {
     s.volume.value = baseVolume - 8
   }
-  if (note.quantizedStartStep % 4 === 0) {
+  if (isAt(8)(note)) {
     s.volume.value = baseVolume - 6
   }
-  if (note.quantizedStartStep % 8 === 0) {
+  if (isAt(4)(note)) {
     s.volume.value = baseVolume - 4
   }
-  if (note.quantizedStartStep % 16 === 0) {
+  if (isAt(2)(note)) {
     s.volume.value = baseVolume - 2
   }
   var duration = note.quantizedEndStep - note.quantizedStartStep
-  console.log(duration)
+  //console.log(duration)
   s.triggerAttackRelease(Tone.Frequency(r._val + offset, 'midi'), '4n');
 }
 function playPiano(note, r) {
@@ -349,32 +349,54 @@ function playPiano(note, r) {
   player.fadeIn = 0.01;
   const baseVolume = state.character === 2 ?
       4 : state.character === 3 ? -4 : 0
-  if (note.quantizedStartStep % 2 === 0) {
+  if (isAt(16)(note)) {
     player.volume.value = baseVolume - 18
   }
-  if (note.quantizedStartStep % 4 === 0) {
+  if (isAt(8)(note)) {
     player.volume.value = baseVolume - 16
   }
-  if (note.quantizedStartStep % 8 === 0) {
+  if (isAt(4)(note)) {
     player.volume.value = baseVolume - 14
   }
-  if (note.quantizedStartStep % 16 === 0) {
+  if (isAt(2)(note)) {
     player.volume.value = baseVolume - 12
   }
   player.start(Tone.now(), 0, 1);
 }
 
+const isAt = (grid) =>
+  (note, offset) =>
+    (note.quantizedStartStep + (offset || 0)) % (32/grid) === 0
+
+const isWhole = isAt(1)
+const isHalf = isAt(2)
+const isFourth = isAt(4)
+const isEigth = isAt(8)
+const isSixteenth = isAt(16)
+
+const kickProb = [1, 0.8, 0.6, 0.2, 0.0]
+const hhProb = [0, 0.8, 0.6, 0.8, 0.0]
+const GRID = [1, 2, 4, 8, 16]
+
+function randomPlay(note, probs) {
+  console.log(note)
+  const noteIsAt = GRID.findIndex(pos => isAt(pos)(note))
+  if (noteIsAt > -1) {
+    return Math.random() < kickProb[noteIsAt]
+  }
+  return false
+}
+
 function playDrum(note, r) {
-  if (note.program === 1 && Math.random() < 1) {
+
+  if (note.program === 1 && randomPlay(note, kickProb)) {
     kickDrumSynth.volume.value = 0
     kickDrumSynth.triggerAttackRelease('C1', '2n');
-    return
   }
 
-  if (note.program === 2 && Math.random() < 1) {
+  if (note.program === 2 && randomPlay(note, hhProb)) {
     highHatSynth.volume.value = -16
     highHatSynth.triggerAttackRelease('8n');
-    return
   }
 }
 
