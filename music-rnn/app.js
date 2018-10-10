@@ -30,11 +30,11 @@ function printMe(e) {
 
 const SCENES = {
   base: ['A', 'D', 'C', 'E'],
-  mainmenu: ['D', 'G', 'C', 'E'],
-  level: ['E', 'A', 'E', 'B'],
-  debrief: ['C', 'F', 'C', 'G'],
-  explore: ['A', 'D', 'A', 'E'],
-  factory: ['D', 'G', 'D', 'E'],
+  // mainmenu: ['D', 'G', 'C', 'E'],
+  // level: ['E', 'A', 'E', 'B'],
+  // debrief: ['C', 'F', 'C', 'G'],
+  // explore: ['A', 'D', 'A', 'E'],
+  // factory: ['D', 'G', 'D', 'E'],
 }
 
 const MOODS = ['happy', 'sad',]
@@ -91,10 +91,10 @@ function pollParams() {
   let params = {
     "mood" : "happy", // "happy" or "sad"
     "character" : 1, // 1 - 3
-    "tempo" : 0.3,//Math.random(),  //0.29724919083554, // 0.0 - 1.0
-    "intensity" : 0.3, // 0.0 - 1.0
+    "tempo" : 0.4,//Math.random(),  //0.29724919083554, // 0.0 - 1.0
+    "intensity" : 0.6, // 0.0 - 1.0
     // TODO: group sequences by number of notes, map to intensity value
-    "scene": "mainmenu",
+    "scene": "base",
   };
 
   fetch('/music.json')
@@ -155,19 +155,21 @@ const compose = (chords) => {
         for (var j=0; j<16; j++) {
           seq.notes.push({
             instrument: 2,
+            program: 1,
             pitch: 36 + roots[0],
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD/4,
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD/4
           });
         }
-        // for (var j=0; j<16; j++) {
-        //   seq.notes.push({
-        //     instrument: 3,
-        //     pitch: 36 + roots[0],
-        //     quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD/4 - 4,
-        //     quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD/4 - 4
-        //   });
-        // }
+        for (var j=0; j<16; j++) {
+          seq.notes.push({
+            instrument: 2,
+            program: 2,
+            pitch: 36 + roots[0],
+            quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD/4 + 4,
+            quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD/4 + 6
+          });
+        }
       }
 
       // Set total sequence length.
@@ -261,8 +263,9 @@ model.initialize().then(() => {
   mm.Player.tone.context.resume();
 
   // unused, just to warm up RNN
-  compose(['A', 'B', 'C', 'D'])
-  .then(initLoops)
+  // compose(['A', 'B', 'C', 'D'])
+  // .then(initLoops)
+  initLoops()
 });
 
 const LS_KEY = 'genmusic-state'
@@ -360,21 +363,28 @@ function playPiano(note, r) {
   }
   player.start(Tone.now(), 0, 1);
 }
-function playNote(note, r) {
-  const loop = state.loops[state.scene][state.mood]
 
-  if (note.instrument === 2 && Math.random() < 1) {
-    kickDrumSynth.volume.value = 8
+function playDrum(note, r) {
+  if (note.program === 1 && Math.random() < 1) {
+    kickDrumSynth.volume.value = 0
     kickDrumSynth.triggerAttackRelease('C1', '2n');
     return
   }
 
-  if (note.instrument === 3 && Math.random() < 0.4) {
+  if (note.program === 2 && Math.random() < 1) {
     highHatSynth.volume.value = -16
     highHatSynth.triggerAttackRelease('8n');
     return
   }
+}
 
+function playNote(note, r) {
+  const loop = state.loops[state.scene][state.mood]
+
+  if (note.instrument === 2) {
+    playDrum(note, r)
+    return
+  }
 
   if (state.intensity < 0.25 && note.quantizedStartStep % 16 !== 0) {
     return
