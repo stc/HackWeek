@@ -11,10 +11,7 @@ var pitches1 = [ 50, 64, 65, 69, 70 ];
 var offset = 0;
 
 var MELODY1, MELODY2, MELODY3, MELODY4;
-
-// var melodiesModelCheckPoint = 'https://storage.googleapis.com/download.magenta.tensorflow.org/models/music_vae/dljs/mel_big';
 var melodiesModelCheckPoint = './data/mel_small';
-
 var NUM_STEPS = 32; // DO NOT CHANGE.
 var interpolatedNoteSequences1;
 var interpolatedNoteSequences2;
@@ -22,30 +19,27 @@ var interpolatedNoteSequences2;
 new musicvae.MusicVAE(melodiesModelCheckPoint)
     .initialize()
     .then(function(musicVAE) {
-        //blends between the given two melodies and returns numInterpolations note sequences
-        // MELODY1 = musicVAE.sample(1, 0.5)[0]; //generates 1 new melody with 0.5 temperature. More temp means crazier melodies
         return musicVAE.interpolate([MELODY1, MELODY2], numInterpolations);
     })
     .then(function(noteSequences) {
         interpolatedNoteSequences1 = noteSequences;
+        console.log("seq1 generated");
     });
 
 new musicvae.MusicVAE(melodiesModelCheckPoint)
     .initialize()
     .then(function(musicVAE) {
-        //blends between the given two melodies and returns numInterpolations note sequences
-        // MELODY1 = musicVAE.sample(1, 0.5)[0]; //generates 1 new melody with 0.5 temperature. More temp means crazier melodies
         return musicVAE.interpolate([MELODY3, MELODY4], numInterpolations);
     })
     .then(function(noteSequences) {
         interpolatedNoteSequences2 = noteSequences;
+        console.log("seq2 generated");
     });
 
-///////////////////////////////
-//TONE.js setup for audio play back
 var reverb = new Tone.Convolver(
-'https://s3-us-west-2.amazonaws.com/s.cdpn.io/969699/hm2_000_ortf_48k.mp3').
-toMaster();
+    'https://s3-us-west-2.amazonaws.com/s.cdpn.io/969699/hm2_000_ortf_48k.mp3').
+    toMaster();
+
 reverb.wet.value = 0.04;
 
 var chorus = new Tone.Chorus(0.2, 2.5, 0.2).connect(reverb);
@@ -105,40 +99,38 @@ function playSynth2(midiNote,numNoteHolds) {
     synth2.triggerAttackRelease(Tone.Frequency(midiNote, "midi"), "8n");
 }
 
+generateMelodies();
+
+window.addEventListener("click", () => {
+    if(!interpolatedNoteSequences1) {
+        return;
+    }
+    if(Tone.Transport.state === 'started') {
+        Tone.Transport.stop();
+    } else {
+        Tone.Transport.start();
+    }
+    // start the loop
+    setInterval(playSequence, 10);
+});
+
+
 var sequenceIndex = -1;
 var stepIndex = -1;
 
-var TILE_SIZE = 20;
-var WIDTH = TILE_SIZE * numInterpolations;
-var HEIGHT = 80;
-var START_COLOR;
-var END_COLOR;
-
-function setup() {
-    var c = createCanvas(WIDTH , HEIGHT);
-    c.parent("generator");
-    START_COLOR = color(60, 180, 203);
-    END_COLOR = color(233, 72, 88);
-    noStroke();
-    generateMelodies();
-
-    console.log(Generator.MOOD);
-}
-
-let count = 0;
-
-function draw() {
-    if(mouseX>0 && mouseX < width) {
-     offset = ceil(map(mouseX,0,width,0,numInterpolations-1));
-    }
+function playSequence() {
+    //here we calculate the percentage through melodies, between 0-1
     var totalPlayTime = (Tone.Transport.bpm.value * NUM_STEPS * numInterpolations) / 1000;
-    var percent = (millis() % 6000 / 6000 / numInterpolations) + (TILE_SIZE / WIDTH * offset);
-    
+    var percent = Tone.Transport.seconds / totalPlayTime % 1;
+
+    //here we calculate the index of interpolatedNoteSequences
+    //and currStepIndex is the note between 0-31 of that playback
     var currSequenceIndex = Math.floor(percent * numInterpolations);
     var currStepIndex = Math.floor((percent * numInterpolations - currSequenceIndex) * NUM_STEPS);
     function isCurrentStep(note) {
         return note.quantizedStartStep === currStepIndex;
     }
+
     if(Tone.Transport.state === 'started') { //playback started
         if(currStepIndex != stepIndex) {
             var notes1 = interpolatedNoteSequences1[currSequenceIndex].notes.filter(isCurrentStep);
@@ -169,65 +161,15 @@ function draw() {
                     synthDrum.triggerAttackRelease("A1", "8n");
                 }
         }
+
         sequenceIndex = currSequenceIndex;
         stepIndex = currStepIndex;
+        console.log(percent);
     }
-
-    background(38);
-    for(var i = 0; i < numInterpolations; i++){
-        var x = i * TILE_SIZE;
-        var y = 20;
-        var currColor = lerpColor(START_COLOR, END_COLOR, i / numInterpolations);
-        //use currColor but at 50% opacity
-        fill(red(currColor), green(currColor), blue(currColor), 125);
-        rect(x, y, TILE_SIZE, TILE_SIZE);
-        fill(255);
-        if(interpolatedNoteSequences1){
-            drawNotes(interpolatedNoteSequences1[i].notes, x, y, TILE_SIZE, TILE_SIZE);
-        }
-    }
-    for(var i = 0; i < numInterpolations; i++){
-        var x = i * TILE_SIZE;
-        var y = 50;
-        var currColor = lerpColor(START_COLOR, END_COLOR, i / numInterpolations);
-        //use currColor but at 50% opacity
-        fill(red(currColor), green(currColor), blue(currColor), 125);
-        rect(x, y, TILE_SIZE, TILE_SIZE);
-        fill(255);
-        if(interpolatedNoteSequences2){
-            drawNotes(interpolatedNoteSequences2[i].notes, x, y, TILE_SIZE, TILE_SIZE);
-        }
-    }
-    fill(255, 64);
-    rect(percent * WIDTH, 0, TILE_SIZE / NUM_STEPS, HEIGHT);
-    text(sequenceIndex + " - " + currStepIndex, 15, 15);
-}
-
-function mousePressed() {
-    if(!interpolatedNoteSequences1) {
-        return;
-    }
-    if(Tone.Transport.state === 'started') {
-        Tone.Transport.stop();
-    } else {
-        Tone.Transport.start();
-    }
-}
-
-function drawNotes(notes, x, y, width, height) {
-    push();
-    translate(x, y);
-    var cellWidth = width / NUM_STEPS;
-    var cellHeight = height / NUM_NOTES;
-    notes.forEach(function(note) {
-        var emptyNoteSpacer = 1;
-        rect(emptyNoteSpacer + cellWidth * note.quantizedStartStep, height - cellHeight * (note.pitch-MIDI_START_NOTE),
-            cellWidth * (note.quantizedEndStep - note.quantizedStartStep) - emptyNoteSpacer, cellHeight);
-    });
-    pop();
 }
 
 function generateMelodies() {
+    console.log("generating melodies...");
     var seed0 = Math.floor(Math.random() * 8);
     var seed1 = Math.floor(Math.random() * 8);
     var seed2 = Math.floor(Math.random() * 6);
