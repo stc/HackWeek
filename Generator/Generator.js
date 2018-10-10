@@ -1,14 +1,19 @@
-var Generator = {
-    "MOOD" : "calm",
-    "Position" : 0,
-    "Intensities": []
-}
+var MOOD = "calm";
+var INTENSITY = 1;
 
 var numInterpolations = 12; 
-var pitches2 = [ 48, 50, 55, 57, 58, 60, 62, 63, 65, 67, 72, 84 ];
-var pitches1 = [ 50, 64, 65, 69, 70 ];
+var pitches1, pitches2;
 
-var offset = 0;
+if(MOOD === "calm") {
+    pitches2 = [ 48, 50, 55, 57, 58, 60, 62, 63, 65, 67, 72, 84 ];
+    pitches1 = [ 50, 64, 65, 69, 70 ];
+}
+if(MOOD == "bright") {
+    pitches2 = [ 67, 69, 71, 74, 76, 79, 81, 83, 84, 85, 86 ];
+    pitches1 = [ 53, 57, 58, 60, 62, 64 ];
+}
+
+var loopLen = 1 / numInterpolations;
 
 var MELODY1, MELODY2, MELODY3, MELODY4;
 var melodiesModelCheckPoint = './data/mel_small';
@@ -101,7 +106,18 @@ function playSynth2(midiNote,numNoteHolds) {
 
 generateMelodies();
 
+var toggle = false;
 window.addEventListener("click", () => {
+    if(toggle) {
+        startSequence();
+    }
+    if(!toggle) {
+        endSequence();
+    }
+    toggle = !toggle;
+});
+
+function startSequence() {
     if(!interpolatedNoteSequences1) {
         return;
     }
@@ -112,8 +128,12 @@ window.addEventListener("click", () => {
     }
     // start the loop
     setInterval(playSequence, 10);
-});
+}
 
+function endSequence() {
+    Tone.Transport.stop();
+    clearInterval(playSequence);
+}
 
 var sequenceIndex = -1;
 var stepIndex = -1;
@@ -121,7 +141,11 @@ var stepIndex = -1;
 function playSequence() {
     //here we calculate the percentage through melodies, between 0-1
     var totalPlayTime = (Tone.Transport.bpm.value * NUM_STEPS * numInterpolations) / 1000;
-    var percent = Tone.Transport.seconds / totalPlayTime % 1;
+    //var percent = Tone.Transport.seconds / totalPlayTime % 1;
+
+    // INTENSITY should be set between 0 - (1-loopLen)
+    if(INTENSITY + loopLen >= 1 ) INTENSITY = INTENSITY - loopLen;
+    var percent = (Date.now() % 6000 / 6000 / numInterpolations) + INTENSITY;
 
     //here we calculate the index of interpolatedNoteSequences
     //and currStepIndex is the note between 0-31 of that playback
