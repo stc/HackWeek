@@ -136,6 +136,7 @@ const compose = (chords) => {
         seq.pitches[note.pitch] = (seq.pitches[note.pitch] || 0) + 1
         note.quantizedStartStep += 1;
         note.quantizedEndStep += 1;
+        note.instrument = 1
         seq.notes.push(note);
       });
       console.log('composition ready', seq.pitches)
@@ -148,6 +149,14 @@ const compose = (chords) => {
           seq.notes.push({
             instrument: 1,
             pitch: 36 + roots[j],
+            quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
+            quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
+          });
+        }
+        for (var j=0; j<4; j++) {
+          seq.notes.push({
+            instrument: 3,
+            pitch: seq.notes[j].pitch + 12,
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
           });
@@ -330,12 +339,15 @@ const VOLUMES = [
 ]
 
 function playSynth(note, r) {
-  var offset = note.instrument === 1 ? 36 : 0
-  const s = note.instrument === 1 ? bassSynth : synth
+  var offset = 0//note.instrument === 1 ? 36 : 0
+  const s = note.instrument === 3 ? bassSynth : synth
   const baseVolume = VOLUMES[state.character].synth
-  if (isAt(2)(note)) {
+
+  if (note.instrument === 3 && isAt(1)(note)) {
     s.volume.value = baseVolume - 2
-  } else if (isAt(4)(note) && Math.random() < state.intensity) {
+  } else if (note.instrument === 1 &&
+      !isAt(1)(note) && isAt(2)(note)
+      && Math.random() < state.intensity) {
     s.volume.value = baseVolume - 8
   } else {
     return
@@ -344,7 +356,20 @@ function playSynth(note, r) {
   //console.log(duration)
   s.triggerAttackRelease(Tone.Frequency(r._val + offset, 'midi'), '4n');
 }
+
 function playPiano(note, r) {
+  if (state.intensity < 0.25 && !isAt(2)(note)) {
+    return
+  }
+  if (state.intensity < 0.5 && !isAt(4)(note)) {
+    return
+  }
+  if (state.intensity < 0.75 && !isAt(8)(note)) {
+    return
+  }
+  if (note.instrument !== 1) {
+    return
+  }
   var player = players.get(r._val);
   player.fadeOut = 0.05;
   player.fadeIn = 0.01;
@@ -407,17 +432,6 @@ function playNote(note, r) {
     playDrum(note, r)
     return
   }
-
-  if (state.intensity < 0.25 && note.quantizedStartStep % 16 !== 0) {
-    return
-  }
-  if (state.intensity < 0.5 && note.quantizedStartStep % 8 !== 0) {
-    return
-  }
-  if (state.intensity < 0.75 && note.quantizedStartStep % 4 !== 0) {
-    return
-  }
-//  console.log(note)
   playPiano(note, r)
   playSynth(note, r)
 }
