@@ -30,11 +30,11 @@ function printMe(e) {
 
 const SCENES = {
   base: ['A', 'D', 'C', 'E'],
-  // mainmenu: ['D', 'G', 'C', 'E'],
-  // level: ['E', 'A', 'E', 'B'],
-  // debrief: ['C', 'F', 'C', 'G'],
-  // explore: ['A', 'D', 'A', 'E'],
-  // factory: ['D', 'G', 'D', 'E'],
+  mainmenu: ['D', 'G', 'C', 'E'],
+  level: ['E', 'A', 'E', 'B'],
+  debrief: ['C', 'F', 'C', 'G'],
+  explore: ['A', 'D', 'A', 'E'],
+  factory: ['D', 'G', 'D', 'E'],
 }
 
 const MOODS = ['happy', 'sad',]
@@ -322,11 +322,17 @@ var highHatSynth = new Tone.MetalSynth({
     }
     }).toMaster();
 
+const VOLUMES = [
+  {piano: 0, synth: 0, drums: 0,},
+  {piano: -4, synth: -4, drums: 4,},
+  {piano: 4, synth: -4, drums: -4,},
+  {piano: -4, synth: 4, drums: -4,},
+]
+
 function playSynth(note, r) {
   var offset = 12
   const s = synth   //note.instrument === 1 ? bassSynth : synth
-  const baseVolume = state.character === 2 ?
-      -4 : state.character === 3 ? 4 : 0
+  const baseVolume = VOLUMES[state.character].synth
   if (isAt(16)(note)) {
     s.volume.value = baseVolume - 8
   }
@@ -347,8 +353,7 @@ function playPiano(note, r) {
   var player = players.get(r._val);
   player.fadeOut = 0.05;
   player.fadeIn = 0.01;
-  const baseVolume = state.character === 2 ?
-      4 : state.character === 3 ? -4 : 0
+  const baseVolume = VOLUMES[state.character].piano
   if (isAt(16)(note)) {
     player.volume.value = baseVolume - 18
   }
@@ -374,28 +379,28 @@ const isFourth = isAt(4)
 const isEigth = isAt(8)
 const isSixteenth = isAt(16)
 
-const kickProb = [1, 0.8, 0.6, 0.2, 0.0]
-const hhProb = [0, 0.8, 0.6, 0.8, 0.0]
+const kickProb = [1, 0.8, 0.4, 0.2, 0.0]
+const hhProb = [0, 0.1, 0.2, 0.8, 0.0]
 const GRID = [1, 2, 4, 8, 16]
 
 function randomPlay(note, probs) {
-  console.log(note)
   const noteIsAt = GRID.findIndex(pos => isAt(pos)(note))
   if (noteIsAt > -1) {
-    return Math.random() < kickProb[noteIsAt]
+    return Math.random() < kickProb[noteIsAt] * state.intensity
   }
   return false
 }
 
 function playDrum(note, r) {
+  const baseVolume = VOLUMES[state.character].drums
 
   if (note.program === 1 && randomPlay(note, kickProb)) {
-    kickDrumSynth.volume.value = 0
+    kickDrumSynth.volume.value = baseVolume + 0
     kickDrumSynth.triggerAttackRelease('C1', '2n');
   }
 
   if (note.program === 2 && randomPlay(note, hhProb)) {
-    highHatSynth.volume.value = -16
+    highHatSynth.volume.value = baseVolume - 16
     highHatSynth.triggerAttackRelease('8n');
   }
 }
