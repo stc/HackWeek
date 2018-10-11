@@ -139,6 +139,7 @@ const compose = (chords) => {
         note.quantizedEndStep += 1;
         note.instrument = 1
         seq.notes.push(note);
+        // unix style uniq
         if (seq.uniqPitches[seq.uniqPitches.length - 1] !== note.pitch) {
           seq.uniqPitches.push(note.pitch)
         }
@@ -165,22 +166,22 @@ const compose = (chords) => {
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
           });
         }
-        for (var j=0; j<STEPS_PER_PROG/4; j++) {
+        for (var j=0; j<STEPS_PER_PROG/2; j++) {
           seq.notes.push({
             instrument: 2,
             program: 1,
             pitch: 36 + roots[0],
-            quantizedStartStep: i*STEPS_PER_PROG + j * 4,
-            quantizedEndStep: i*STEPS_PER_PROG + j * 4 + 1
+            quantizedStartStep: i*STEPS_PER_PROG + j * 2,
+            quantizedEndStep: i*STEPS_PER_PROG + j * 2 + 1
           });
         }
-        for (var j=0; j<STEPS_PER_PROG/4; j++) {
+        for (var j=0; j<STEPS_PER_PROG/2; j++) {
           seq.notes.push({
             instrument: 2,
             program: 2,
             pitch: 36 + roots[0],
-            quantizedStartStep: i*STEPS_PER_PROG + j * 4,
-            quantizedEndStep: i*STEPS_PER_PROG + j * 4 + 1
+            quantizedStartStep: i*STEPS_PER_PROG + j * 2,
+            quantizedEndStep: i*STEPS_PER_PROG + j * 2 + 1
           });
         }
       }
@@ -403,14 +404,14 @@ const isFourth = isAt(4)
 const isEigth = isAt(8)
 const isSixteenth = isAt(16)
 
-const kickProb = [1, 0.8, 0.4, 0.2, 0.0]
-const hhProb = [0, 0.1, 0.2, 0.8, 0.0]
+const kickProb = [2, 0.8, 0.4, 0.1, 0.05]
+const hhProb = [0, 0.1, 0.2, 0.4, 0.02]
 const GRID = [1, 2, 4, 8, 16]
 
 function randomPlay(note, probs) {
   const noteIsAt = GRID.findIndex(pos => isAt(pos)(note))
   if (noteIsAt > -1) {
-    return Math.random() < kickProb[noteIsAt] * state.intensity
+    return Math.random() < probs[noteIsAt] * state.intensity
   }
   return false
 }
