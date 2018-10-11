@@ -79,7 +79,7 @@ function translateParams(params) {
   }
   state.nextTempo = Math.round(120 + (params.tempo * 100));
   state.intensity = params.intensity || 0.1
-  state.character = params.character || 1
+  state.character = params.character || 0
 
   if (!state.started) {
     state.started = true
@@ -88,7 +88,7 @@ function translateParams(params) {
 }
 
 function pollParams() {
-  let params = {
+  var params = {
     "mood" : "happy", // "happy" or "sad"
     "character" : 1, // 1 - 3
     "tempo" : 0.4,//Math.random(),  //0.29724919083554, // 0.0 - 1.0
@@ -146,11 +146,44 @@ const compose = (chords) => {
       });
       console.log('composition ready', seq.pitches)
 
+      const drumRepsPerLoop = 2
+
+      const drums = []
+      for (let j=0; j<STEPS_PER_PROG/2/drumRepsPerLoop; j++) {
+        const note = {
+          instrument: 2,
+          quantizedStartStep: j * 2,
+          quantizedEndStep: j * 2 + 1
+        }
+        if (randomPlay(note, kickProb, 1)) {
+          drums.push(Object.assign({}, note, {
+            program: 1,
+          }))
+        }
+        if (randomPlay(note, hhProb, 1)) {
+          drums.push(Object.assign({}, note, {
+            program: 2,
+          }))
+        }
+      }
+
+      for (let i=0; i<NUM_REPS*drumRepsPerLoop; i++) {
+        drums.map(note =>
+          Object.assign({}, note, {
+            quantizedStartStep: i*STEPS_PER_PROG/drumRepsPerLoop + note.quantizedStartStep,
+            quantizedEndStep: i*STEPS_PER_PROG/drumRepsPerLoop + note.quantizedEndStep,
+          })
+        ).forEach(note => {
+          seq.notes.push(note)
+        })
+      }
+      console.log(seq.notes)
+
       const roots = chords.map(mm.chords.ChordSymbols.root);
-      for (var i=0; i<NUM_REPS; i++) {
+      for (let i=0; i<NUM_REPS; i++) {
         // Add the bass progression.
 
-        for (var j=0; j<4; j++) {
+        for (let j=0; j<4; j++) {
           seq.notes.push({
             instrument: 1,
             pitch: 36 + roots[j],
@@ -158,7 +191,7 @@ const compose = (chords) => {
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
           });
         }
-        for (var j=0; j<4; j++) {
+        for (let j=0; j<4; j++) {
           seq.notes.push({
             instrument: 3,
             pitch: seq.uniqPitches[j%seq.uniqPitches.length] + 12,
@@ -166,25 +199,8 @@ const compose = (chords) => {
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
           });
         }
-        for (var j=0; j<STEPS_PER_PROG/2; j++) {
-          seq.notes.push({
-            instrument: 2,
-            program: 1,
-            pitch: 36 + roots[0],
-            quantizedStartStep: i*STEPS_PER_PROG + j * 2,
-            quantizedEndStep: i*STEPS_PER_PROG + j * 2 + 1
-          });
-        }
-        for (var j=0; j<STEPS_PER_PROG/2; j++) {
-          seq.notes.push({
-            instrument: 2,
-            program: 2,
-            pitch: 36 + roots[0],
-            quantizedStartStep: i*STEPS_PER_PROG + j * 2,
-            quantizedEndStep: i*STEPS_PER_PROG + j * 2 + 1
-          });
-        }
       }
+
 
       // Set total sequence length.
       seq.totalQuantizedSteps = STEPS_PER_PROG * NUM_REPS;
@@ -408,10 +424,10 @@ const kickProb = [2, 0.8, 0.4, 0.1, 0.05]
 const hhProb = [0, 0.1, 0.2, 0.4, 0.02]
 const GRID = [1, 2, 4, 8, 16]
 
-function randomPlay(note, probs) {
+function randomPlay(note, probs, intensity) {
   const noteIsAt = GRID.findIndex(pos => isAt(pos)(note))
   if (noteIsAt > -1) {
-    return Math.random() < probs[noteIsAt] * state.intensity
+    return Math.random() < probs[noteIsAt] * (intensity || state.intensity)
   }
   return false
 }
@@ -419,12 +435,12 @@ function randomPlay(note, probs) {
 function playDrum(note, r) {
   const baseVolume = VOLUMES[state.character].drums
 
-  if (note.program === 1 && randomPlay(note, kickProb)) {
+  if (note.program === 1 && (Math.random() < state.intensity)) {
     kickDrumSynth.volume.value = baseVolume + 0
     kickDrumSynth.triggerAttackRelease('C1', '2n');
   }
 
-  if (note.program === 2 && randomPlay(note, hhProb)) {
+  if (note.program === 2 && Math.random() < state.intensity) {
     highHatSynth.volume.value = baseVolume - 16
     highHatSynth.triggerAttackRelease('8n');
   }
