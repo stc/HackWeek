@@ -29,7 +29,7 @@ function printMe(e) {
 }
 
 const SCENES = {
-  base: ['A', 'D', 'C', 'E'],
+  base: ['Am', 'D7', 'G', 'G'],
   mainmenu: ['D', 'G', 'C', 'E'],
   level: ['E', 'A', 'E', 'B'],
   debrief: ['C', 'F', 'C', 'G'],
@@ -37,11 +37,16 @@ const SCENES = {
   factory: ['D', 'G', 'D', 'E'],
 }
 
+const SAD_SCENES = {
+  base: ['D0', 'B7', 'Em', 'Em'],
+}
+
 const MOODS = ['happy', 'sad',]
 
-function moodify(chords, mood) {
-  return mood === 'happy' ? chords :
-      chords.map(c => c + 'm')
+function moodify(scene, mood) {
+  return mood === 'happy' ? SCENES[scene] :
+      SAD_SCENES[scene] ? SAD_SCENES[scene] :
+      SCENES[scene].map(c => c + 'm')
 }
 
 var state = {
@@ -177,7 +182,6 @@ const compose = (chords) => {
           seq.notes.push(note)
         })
       }
-      console.log(seq.notes)
 
       const roots = chords.map(mm.chords.ChordSymbols.root);
       for (let i=0; i<NUM_REPS; i++) {
@@ -190,6 +194,15 @@ const compose = (chords) => {
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
           });
+          if (Math.random() < 0.5) {
+            seq.notes.push({
+              instrument: 1,
+              pitch: 36 + roots[j] - (Math.random() < 0.25 ? 1 : 0),
+              quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 0.75,
+              quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 1 + STEPS_PER_CHORD * 0.75
+            });
+          }
+
         }
         for (let j=0; j<4; j++) {
           seq.notes.push({
@@ -219,7 +232,7 @@ function initLoops() {
           && state.loops[scene][mood]) {
         return
       }
-      composers.push(filteredCompose(moodify(SCENES[scene], mood), notRobotMusic))
+      composers.push(filteredCompose(moodify(scene, mood), notRobotMusic))
       params.push({scene : scene, mood : mood})
     })
   })
@@ -256,7 +269,7 @@ function draw() {
   var y = lineHeight
   text("scene: " + state.scene, x, y);
   y += lineHeight
-  var chords = state.scene ? moodify(SCENES[state.scene], state.mood) : []
+  var chords = state.scene ? moodify(state.scene, state.mood) : []
   text("chords: " + chords.join(' '), x, y);
   y += lineHeight
   text("tempo: " + state.tempo
@@ -365,11 +378,11 @@ function playSynth(note, r) {
   const baseVolume = VOLUMES[state.character].synth
 
   if (note.instrument === 3 && isAt(1)(note)) {
-    s.volume.value = baseVolume - 2
+    s.volume.value = baseVolume
   } else if (note.instrument === 1 &&
       !isAt(1)(note) && isAt(2)(note)
       && Math.random() < state.intensity) {
-    s.volume.value = baseVolume - 8
+    s.volume.value = baseVolume - 6
   } else {
     return
   }
@@ -467,7 +480,7 @@ function playSeq() {
     loop.loopCount += (loop.loopCount === 0 || Math.random() > REPEAT_CHANCE) ? 1 : -1
   }
   if (loop.reps === 1 && loop.loopCount + 1 === loop.seqs.length) {
-    filteredCompose(moodify(SCENES[state.scene], state.mood), notRobotMusic)
+    filteredCompose(moodify(state.scene, state.mood), notRobotMusic)
     .then(seq => loop.seqs.push(seq))
   }
 
