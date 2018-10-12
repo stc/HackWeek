@@ -368,38 +368,45 @@ const INSTRUMENTS = {
     }).toMaster();
   })(),
   kickDrum: new Tone.MembraneSynth().toMaster(),
+  piano: (()=> {
+    var samplesPath = "https://storage.googleapis.com/melody-mixer/piano/"
+    var samples = {};
+    var NUM_NOTES = 88;
+    var MIDI_START_NOTE = 21;
+    for (var i = MIDI_START_NOTE; i < NUM_NOTES + MIDI_START_NOTE; i++) {
+      samples[i] = samplesPath + i + '.mp3';
+    }
+
+    var players = new Tone.Players(samples, function onPlayersLoaded(){
+        console.log("Tone.js players loaded");
+    }).toMaster();
+    return players
+  })(),
+  roboViolin: (() => {
+    var synth = new Tone.PolySynth(6, Tone.Synth, {
+      envelope: {
+          attack: 2,
+          decay: 1,
+          sustain: 1,
+          release: 8,
+      }
+    }).toMaster();
+    synth.set("detune", -1200);
+    return synth
+  })(),
+  roboCello: (() => {
+    var bassSynth = new Tone.PolySynth(6, Tone.Synth, {
+      envelope: {
+        attack: 2,
+        decay: 3,
+        sustain: 2,
+        release: 16,
+      }
+    }).toMaster();
+    bassSynth.set("detune", -1200);
+    return bassSynth
+  })(),
 }
-
-var samplesPath = "https://storage.googleapis.com/melody-mixer/piano/"
-var samples = {};
-var NUM_NOTES = 88;
-var MIDI_START_NOTE = 21;
-for (var i = MIDI_START_NOTE; i < NUM_NOTES + MIDI_START_NOTE; i++) {
-  samples[i] = samplesPath + i + '.mp3';
-}
-
-var players = new Tone.Players(samples, function onPlayersLoaded(){
-    console.log("Tone.js players loaded");
-}).toMaster();
-
-var synth = new Tone.PolySynth(6, Tone.Synth, {
-  envelope: {
-      attack: 2,
-      decay: 1,
-      sustain: 1,
-      release: 8,
-  }
-}).toMaster();
-synth.set("detune", -1200);
-var bassSynth = new Tone.PolySynth(6, Tone.Synth, {
-  envelope: {
-    attack: 2,
-    decay: 3,
-    sustain: 2,
-    release: 16,
-  }
-}).toMaster();
-bassSynth.set("detune", -1200);
 
 const VOLUMES = [
   {piano: 0, synth: 0, drums: 0,},
@@ -410,7 +417,7 @@ const VOLUMES = [
 
 function playSynth(note, r) {
   var offset = 0//note.instrument === 1 ? 36 : 0
-  const s = note.instrument === 3 ? bassSynth : synth
+  const s = note.instrument === 3 ? INSTRUMENTS.roboCello : INSTRUMENTS.roboViolin
   const baseVolume = VOLUMES[state.character].synth - 2
 
   if (note.instrument === 3 && isAt(1)(note)) {
@@ -454,7 +461,7 @@ function playPiano(note, r) {
   if (isAt(2)(note)) {
     volume = baseVolume - 12
   }
-  // var player = players.get(r._val);
+  // var player = INSTRUMENTS.piano.get(r._val);
   // player.fadeOut = 0.05;
   // player.fadeIn = 0.01;
   // player.volume.value = volume
