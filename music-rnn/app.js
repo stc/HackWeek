@@ -324,6 +324,33 @@ function saveState() {
   localStorage.setItem(LS_KEY, JSON.stringify(state))
 }
 
+const INSTRUMENTS = {
+  plink: (() => {
+    let vol = new Tone.Volume(-12).toMaster();
+
+    let reverb = new Tone.Freeverb(0.9).connect(vol);
+    reverb.wet.value = 0.1;
+
+    let delay = new Tone.FeedbackDelay(0.304, 0.5).connect(reverb);
+    delay.wet.value = 0.1;
+
+    let vibrato = new Tone.Vibrato(5, 0.2).connect(delay);
+
+    let polySynth = new Tone.PolySynth(3, Tone.Synth, {
+      "oscillator": {
+        "type": "sine"
+      },
+      "envelope": {
+        "attack": 0.01,
+        "decay": 0.1,
+        "sustain": 0.2,
+        "release": 1,
+      }
+    })
+    return polySynth.connect(vibrato);
+  })(),
+
+}
 
 var samplesPath = "https://storage.googleapis.com/melody-mixer/piano/"
 var samples = {};
@@ -404,23 +431,29 @@ function playPiano(note, r) {
   if (note.instrument !== 1) {
     return
   }
-  var player = players.get(r._val);
-  player.fadeOut = 0.05;
-  player.fadeIn = 0.01;
   const baseVolume = VOLUMES[state.character].piano
+  var volume = baseVolume
   if (isAt(16)(note)) {
-    player.volume.value = baseVolume - 18
+    volume = baseVolume - 18
   }
   if (isAt(8)(note)) {
-    player.volume.value = baseVolume - 16
+    volume = baseVolume - 16
   }
   if (isAt(4)(note)) {
-    player.volume.value = baseVolume - 14
+    volume = baseVolume - 14
   }
   if (isAt(2)(note)) {
-    player.volume.value = baseVolume - 12
+    volume = baseVolume - 12
   }
-  player.start(Tone.now(), 0, 1);
+  // var player = players.get(r._val);
+  // player.fadeOut = 0.05;
+  // player.fadeIn = 0.01;
+  // player.volume.value = volume
+  // player.start(Tone.now(), 0, 1);
+
+  const s = INSTRUMENTS.plink
+  s.volume.value = volume + 18
+  s.triggerAttackRelease(Tone.Frequency(r._val, 'midi'), '16n');
 }
 
 const isAt = (grid) =>
