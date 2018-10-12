@@ -200,8 +200,17 @@ const compose = (chords) => {
               instrument: 1,
               program: 2,
               pitch: 36 + roots[j] - (Math.random() < 0.25 ? 1 : 0),
-              quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 0.75,
-              quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 1 + STEPS_PER_CHORD * 0.75
+              quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 3/4,
+              quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 1 + STEPS_PER_CHORD * 3/4,
+            });
+          }
+          if (Math.random() < 0.5) {
+            seq.notes.push({
+              instrument: 1,
+              program: 2,
+              pitch: 36 + roots[j] - (Math.random() < 0.25 ? 1 : 0),
+              quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 7/8,
+              quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 1 + STEPS_PER_CHORD * 7/8,
             });
           }
 
