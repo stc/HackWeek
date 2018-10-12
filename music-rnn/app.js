@@ -190,6 +190,7 @@ const compose = (chords) => {
         for (let j=0; j<4; j++) {
           seq.notes.push({
             instrument: 1,
+            program: 2,
             pitch: 36 + roots[j],
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
@@ -197,6 +198,7 @@ const compose = (chords) => {
           if (Math.random() < 0.5) {
             seq.notes.push({
               instrument: 1,
+              program: 2,
               pitch: 36 + roots[j] - (Math.random() < 0.25 ? 1 : 0),
               quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 0.75,
               quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 1 + STEPS_PER_CHORD * 0.75
@@ -418,7 +420,7 @@ const VOLUMES = [
 function playSynth(note, r) {
   var offset = 0//note.instrument === 1 ? 36 : 0
   const s = note.instrument === 3 ? INSTRUMENTS.roboCello : INSTRUMENTS.roboViolin
-  const baseVolume = VOLUMES[state.character].synth - 2
+  const baseVolume = VOLUMES[state.character].synth - 4
 
   if (note.instrument === 3 && isAt(1)(note)) {
     s.volume.value = baseVolume
@@ -460,6 +462,12 @@ function playPiano(note, r) {
   }
   if (isAt(2)(note)) {
     volume = baseVolume - 12
+  }
+  if (isAt(1)(note) && note.program === 2) {
+    volume = baseVolume - 6
+  }
+  if (!isAt(1)(note) && note.program === 2) {
+    volume = baseVolume - 2
   }
   // var player = INSTRUMENTS.piano.get(r._val);
   // player.fadeOut = 0.05;
