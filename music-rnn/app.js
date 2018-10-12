@@ -349,7 +349,25 @@ const INSTRUMENTS = {
     })
     return polySynth.connect(vibrato);
   })(),
-
+  openHH: (()=> {
+    return new Tone.MetalSynth({
+    "envelope"  : {
+        attack  : 0.001,
+        decay  : 1,
+        release  : 1
+    }
+    }).toMaster();
+  })(),
+  closedHH: (()=> {
+    return new Tone.MetalSynth({
+    "envelope"  : {
+        attack  : 0.001,
+        decay  : 0.1,
+        release  : 1
+    }
+    }).toMaster();
+  })(),
+  kickDrum: new Tone.MembraneSynth().toMaster(),
 }
 
 var samplesPath = "https://storage.googleapis.com/melody-mixer/piano/"
@@ -383,15 +401,6 @@ var bassSynth = new Tone.PolySynth(6, Tone.Synth, {
 }).toMaster();
 bassSynth.set("detune", -1200);
 
-var kickDrumSynth = new Tone.MembraneSynth().toMaster();
-var highHatSynth = new Tone.MetalSynth({
-    "envelope"  : {
-        attack  : 0.001 ,
-        decay  : 1 ,
-        release  : 1
-    }
-    }).toMaster();
-
 const VOLUMES = [
   {piano: 0, synth: 0, drums: 0,},
   {piano: -4, synth: -4, drums: 4,},
@@ -402,13 +411,13 @@ const VOLUMES = [
 function playSynth(note, r) {
   var offset = 0//note.instrument === 1 ? 36 : 0
   const s = note.instrument === 3 ? bassSynth : synth
-  const baseVolume = VOLUMES[state.character].synth
+  const baseVolume = VOLUMES[state.character].synth - 2
 
   if (note.instrument === 3 && isAt(1)(note)) {
     s.volume.value = baseVolume
   } else if (note.instrument === 1 &&
-      !isAt(1)(note) && isAt(2)(note)
-      && Math.random() < state.intensity) {
+      !isAt(1)(note) && isAt(2)(note) &&
+      Math.random() < state.intensity) {
     s.volume.value = baseVolume - 6
   } else {
     return
@@ -482,13 +491,13 @@ function playDrum(note, r) {
   const baseVolume = VOLUMES[state.character].drums
 
   if (note.program === 1 && (Math.random() < state.intensity)) {
-    kickDrumSynth.volume.value = baseVolume + 0
-    kickDrumSynth.triggerAttackRelease('C1', '2n');
+    INSTRUMENTS.kickDrum.volume.value = baseVolume + 0
+    INSTRUMENTS.kickDrum.triggerAttackRelease('C1', '2n');
   }
 
   if (note.program === 2 && Math.random() < state.intensity) {
-    highHatSynth.volume.value = baseVolume - 16
-    highHatSynth.triggerAttackRelease('8n');
+    INSTRUMENTS.closedHH.volume.value = baseVolume - 16
+    INSTRUMENTS.closedHH.triggerAttackRelease('8n');
   }
 }
 
