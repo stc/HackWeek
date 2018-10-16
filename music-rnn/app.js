@@ -82,7 +82,8 @@ function translateParams(params) {
     state.mood = params.mood
     resetSeq()
   }
-  state.nextTempo = Math.round(120 + (params.tempo * 100));
+  state.nextTempo = Math.round(120 + (params.tempo * 200));
+
   state.intensity = params.intensity || 0.1
   state.character = params.character || 0
 
@@ -459,24 +460,24 @@ function playPiano(note, r) {
     return
   }
   const baseVolume = VOLUMES[state.character].piano
-  var volume = baseVolume
-  if (isAt(16)(note)) {
-    volume = baseVolume - 18
-  }
-  if (isAt(8)(note)) {
-    volume = baseVolume - 16
-  }
-  if (isAt(4)(note)) {
-    volume = baseVolume - 14
-  }
-  if (isAt(2)(note)) {
-    volume = baseVolume - 12
-  }
+  var volume = baseVolume - 12
+  // if (isAt(16)(note)) {
+  //   volume = baseVolume - 18
+  // }
+  // if (isAt(8)(note)) {
+  //   volume = baseVolume - 16
+  // }
+  // if (isAt(4)(note)) {
+  //   volume = baseVolume - 14
+  // }
+  // if (isAt(2)(note)) {
+  //   volume = baseVolume - 12
+  // }
   if (isAt(1)(note) && note.program === 2) {
-    volume = baseVolume - 6
+    volume = baseVolume + 4
   }
   if (!isAt(1)(note) && note.program === 2) {
-    volume = baseVolume - 2
+    volume = baseVolume + 8
   }
   // var player = INSTRUMENTS.piano.get(r._val);
   // player.fadeOut = 0.05;
