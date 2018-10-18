@@ -55,6 +55,7 @@ var state = {
   intensity: null,
   character: 1,
   scene: null,
+  volume: 0,
   chords: [],
   started: false,
   pollHandler: null,
@@ -86,6 +87,7 @@ function translateParams(params) {
 
   state.intensity = params.intensity || 0.1
   state.character = params.character || 0
+  state.volume = params.volume || 0
 
   if (!state.started) {
     state.started = true
@@ -291,6 +293,8 @@ function draw() {
   y += lineHeight
   text("character: " + state.character, x, y);
   y += lineHeight
+  text("volume: " + state.volume, x, y);
+  y += lineHeight
 
   if (state.loops[state.scene]) {
     const loop = state.loops[state.scene][state.mood]
@@ -420,6 +424,8 @@ const INSTRUMENTS = {
   })(),
 }
 
+
+
 const VOLUMES = [
   {piano: 0, synth: 0, drums: 0,},
   {piano: -4, synth: -4, drums: 4,},
@@ -430,7 +436,7 @@ const VOLUMES = [
 function playSynth(note, r) {
   var offset = 0//note.instrument === 1 ? 36 : 0
   const s = note.instrument === 3 ? INSTRUMENTS.roboCello : INSTRUMENTS.roboViolin
-  const baseVolume = VOLUMES[state.character].synth - 4
+  const baseVolume = state.volume + VOLUMES[state.character].synth - 4
 
   if (note.instrument === 3 && isAt(1)(note)) {
     s.volume.value = baseVolume
@@ -459,7 +465,7 @@ function playPiano(note, r) {
   if (note.instrument !== 1) {
     return
   }
-  const baseVolume = VOLUMES[state.character].piano
+  const baseVolume = state.volume + VOLUMES[state.character].piano
   var volume = baseVolume - 12
   // if (isAt(16)(note)) {
   //   volume = baseVolume - 18
@@ -513,7 +519,7 @@ function randomPlay(note, probs, intensity) {
 }
 
 function playDrum(note, r) {
-  const baseVolume = VOLUMES[state.character].drums
+  const baseVolume = state.volume + VOLUMES[state.character].drums
 
   if (note.program === 1 && (Math.random() < state.intensity)) {
     INSTRUMENTS.kickDrum.volume.value = baseVolume + 0
