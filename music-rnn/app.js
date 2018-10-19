@@ -230,7 +230,6 @@ const compose = (chords) => {
         }
       }
 
-
       // Set total sequence length.
       seq.totalQuantizedSteps = STEPS_PER_PROG * NUM_REPS;
 
@@ -367,6 +366,31 @@ const INSTRUMENTS = {
     })
     return polySynth.connect(vibrato);
   })(),
+  bassPlink: (() => {
+    let vol = new Tone.Volume(-12).toMaster();
+
+    // let reverb = new Tone.Freeverb(0.9).connect(vol);
+    // reverb.wet.value = 0.1;
+
+    // let delay = new Tone.FeedbackDelay(0.304, 0.5).connect(reverb);
+    // delay.wet.value = 0.1;
+
+    // let vibrato = new Tone.Vibrato(5, 0.2).connect(delay);
+
+    let polySynth = new Tone.PolySynth(3, Tone.Synth, {
+      "oscillator": {
+        "type": "sine"
+      },
+      "envelope": {
+        "attack": 0.01,
+        "decay": 0.1,
+        "sustain": 0.2,
+        "release": 0.6,
+      }
+    })
+    // return polySynth.connect(vibrato);
+    return polySynth.connect(vol);
+  })(),
   openHH: (()=> {
     return new Tone.MetalSynth({
     "envelope"  : {
@@ -490,10 +514,10 @@ function playPiano(note, r) {
   //   volume = baseVolume - 12
   // }
   if (isAt(1)(note) && note.program === 2) {
-    volume = baseVolume + 4
+    volume = baseVolume - 6
   }
   if (!isAt(1)(note) && note.program === 3) {
-    volume = baseVolume + 8
+    volume = baseVolume - 2
     if (Math.random() > state.intensity) {
       return
     }
@@ -505,7 +529,7 @@ function playPiano(note, r) {
   // player.volume.value = volume
   // player.start(Tone.now(), 0, 1);
 
-  const s = INSTRUMENTS.plink
+  const s = note.program === 1 ? INSTRUMENTS.plink : INSTRUMENTS.bassPlink
   s.volume.value = volume + 18
   s.triggerAttackRelease(Tone.Frequency(r._val, 'midi'), '16n');
 }
@@ -538,6 +562,9 @@ function playDrum(note, r) {
   if (note.program === 1 && (Math.random() < state.intensity)) {
     INSTRUMENTS.kickDrum.volume.value = baseVolume + 0
     INSTRUMENTS.kickDrum.triggerAttackRelease('C1', '2n');
+  } else if (note.program === 1 && isAt(1)(note) && Math.random() < 0.9) {
+    INSTRUMENTS.kickDrum.volume.value = baseVolume + 0
+    INSTRUMENTS.kickDrum.triggerAttackRelease('C1', '1n');
   }
 
   if (note.program === 2 && Math.random() < state.intensity) {
