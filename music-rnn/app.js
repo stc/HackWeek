@@ -454,9 +454,9 @@ const INSTRUMENTS = {
 
 const VOLUMES = [
   {piano: 0, synth: 0, drums: 0,},
-  {piano: -4, synth: -4, drums: 4,},
-  {piano: 4, synth: -4, drums: -4,},
-  {piano: -4, synth: 4, drums: -4,},
+  {piano: -2, synth: -2, drums: 2,},
+  {piano: 2, synth: -2, drums: -2,},
+  {piano: -2, synth: 2, drums: -2,},
 ]
 
 function playSynth(note, r) {
@@ -514,10 +514,10 @@ function playPiano(note, r) {
   //   volume = baseVolume - 12
   // }
   if (isAt(1)(note) && note.program === 2) {
-    volume = baseVolume - 6
+    volume = baseVolume - 12
   }
   if (!isAt(1)(note) && note.program === 3) {
-    volume = baseVolume - 2
+    volume = baseVolume - 10
     if (Math.random() > state.intensity) {
       return
     }
@@ -560,7 +560,7 @@ function playDrum(note, r) {
   const baseVolume = state.volume + VOLUMES[state.character].drums
 
   if (note.program === 1 && (Math.random() < state.intensity)) {
-    INSTRUMENTS.kickDrum.volume.value = baseVolume + 0
+    INSTRUMENTS.kickDrum.volume.value = baseVolume - 4
     INSTRUMENTS.kickDrum.triggerAttackRelease('C1', '2n');
   } else if (note.program === 1 && isAt(1)(note) && Math.random() < 0.9) {
     INSTRUMENTS.kickDrum.volume.value = baseVolume + 0
