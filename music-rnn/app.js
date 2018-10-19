@@ -221,7 +221,7 @@ const compose = (chords) => {
         for (let j=0; j<4; j++) {
           seq.notes.push({
             instrument: 3,
-            pitch: seq.uniqPitches[j%seq.uniqPitches.length] + 12,
+            pitch: roots[j] + 60,//seq.uniqPitches[j%seq.uniqPitches.length] + 12,
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
           });
