@@ -163,12 +163,12 @@ const compose = (chords) => {
           quantizedStartStep: j * 2,
           quantizedEndStep: j * 2 + 1
         }
-        if (randomPlay(note, kickProb, 1)) {
+        if (randomPlay(note, kickProb, 2)) {
           drums.push(Object.assign({}, note, {
             program: 1,
           }))
         }
-        if (randomPlay(note, hhProb, 1)) {
+        if (randomPlay(note, hhProb, 2)) {
           drums.push(Object.assign({}, note, {
             program: 2,
           }))
