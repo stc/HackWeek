@@ -146,6 +146,7 @@ const compose = (chords) => {
         note.quantizedStartStep += 1;
         note.quantizedEndStep += 1;
         note.instrument = 1
+        note.program = 1
         seq.notes.push(note);
         // unix style uniq
         if (seq.uniqPitches[seq.uniqPitches.length - 1] !== note.pitch) {
@@ -198,20 +199,20 @@ const compose = (chords) => {
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
           });
-          if (Math.random() < 0.5) {
+          if (Math.random() < 0.9) {
             seq.notes.push({
               instrument: 1,
-              program: 2,
-              pitch: 36 + roots[j] - (Math.random() < 0.25 ? 1 : 0),
+              program: 3,
+              pitch: 36 + roots[j] - (Math.random() < 0.3 ? 1 : 0),
               quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 3/4,
               quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 1 + STEPS_PER_CHORD * 3/4,
             });
           }
-          if (Math.random() < 0.5) {
+          if (Math.random() < 0.6) {
             seq.notes.push({
               instrument: 1,
-              program: 2,
-              pitch: 36 + roots[j] - (Math.random() < 0.25 ? 1 : 0),
+              program: 3,
+              pitch: 36 + roots[j] - (Math.random() < 0.9 ? 1 : 0),
               quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 7/8,
               quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 1 + STEPS_PER_CHORD * 7/8,
             });
@@ -221,6 +222,7 @@ const compose = (chords) => {
         for (let j=0; j<4; j++) {
           seq.notes.push({
             instrument: 3,
+            program: 1,
             pitch: roots[j] + 60,//seq.uniqPitches[j%seq.uniqPitches.length] + 12,
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
             quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
@@ -434,16 +436,24 @@ const VOLUMES = [
 ]
 
 function playSynth(note, r) {
-  var offset = 0//note.instrument === 1 ? 36 : 0
+  var offset = 12
   const s = note.instrument === 3 ? INSTRUMENTS.roboCello : INSTRUMENTS.roboViolin
   const baseVolume = state.volume + VOLUMES[state.character].synth - 4
 
   if (note.instrument === 3 && isAt(1)(note)) {
     s.volume.value = baseVolume
+    if (note.program === 1) {
+      s.volume.value = baseVolume - 4
+    }
   } else if (note.instrument === 1 &&
       !isAt(1)(note) && isAt(2)(note) &&
+      Math.random() < state.intensity * 2) {
+    s.volume.value = baseVolume - 2
+  } else if (note.instrument === 1 &&
+      !isAt(1)(note) && !isAt(2)(note) &&
+      isAt(4)(note) &&
       Math.random() < state.intensity) {
-    s.volume.value = baseVolume - 6
+    s.volume.value = baseVolume - 4
   } else {
     return
   }
@@ -482,9 +492,13 @@ function playPiano(note, r) {
   if (isAt(1)(note) && note.program === 2) {
     volume = baseVolume + 4
   }
-  if (!isAt(1)(note) && note.program === 2) {
+  if (!isAt(1)(note) && note.program === 3) {
     volume = baseVolume + 8
+    if (Math.random() > state.intensity) {
+      return
+    }
   }
+
   // var player = INSTRUMENTS.piano.get(r._val);
   // player.fadeOut = 0.05;
   // player.fadeIn = 0.01;
