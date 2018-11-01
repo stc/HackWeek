@@ -21,7 +21,6 @@ const LOOP_REPS = 4;
 const REPEAT_CHANCE = 0.0
 
 // Set up Improv RNN model and player.
-const model = new mm.MusicRNN('https://storage.googleapis.com/magentadata/js/checkpoints/music_rnn/chord_pitches_improv');
 const player = new mm.Player(true,printMe);
 
 function printMe(e) {
@@ -125,6 +124,8 @@ const filteredCompose = (chords, jury) => {
   })
 }
 
+const sample = array => array[Math.floor(Math.random() * array.length)]
+
 // returns an improvised Sequence over the specifed chord progression.
 const compose = (chords) => {
   console.log('composing loop', chords)
@@ -141,7 +142,7 @@ const compose = (chords) => {
   return new Promise(resolve => {
     const melodies = state.melodies[chords.join()]
     const melody = melodies ?
-        melodies[Math.floor(Math.random() * melodies.length)]
+        sample(melodies)
         : []
     const notes = []
     for (let i = 0; i < melody.length/3; i++) {
@@ -206,9 +207,9 @@ const compose = (chords) => {
           program: 2,
           pitch: 36 + roots[j],
           quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
-          quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 2*bassDuration
+          quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 2 * bassDuration
         });
-        if (Math.random() < 0.9) {
+        if (Math.random() < 0.8) {
           seq.notes.push({
             instrument: 1,
             program: 3,
@@ -218,10 +219,12 @@ const compose = (chords) => {
           });
         }
         if (Math.random() < 0.6) {
+          const shift = sample([0, -1, -1, 3, 4,])
+          console.log(j, shift)
           seq.notes.push({
             instrument: 1,
             program: 3,
-            pitch: 36 + roots[j] - (Math.random() < 0.9 ? 1 : 0),
+            pitch: 36 + roots[j] + shift,
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 7/8,
             quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + bassDuration + STEPS_PER_CHORD * 7/8,
           });
@@ -324,14 +327,6 @@ function mouseReleased() {
     clearInterval(state.pollHandler)
   }
 }
-
-// Initialize model then start playing.
-model.initialize().then(() => {
-  document.getElementById('message').innerText = 'Done loading model.'
-  mm.Player.tone.context.resume();
-
-  initLoops()
-});
 
 const LS_KEY = 'genmusic-state'
 
@@ -453,8 +448,8 @@ const INSTRUMENTS = {
 
 const INSTRUMENT_VOLUMES = {
   plink: 6,
-  bassPlink: 4,
-  roboViolin: -2,
+  bassPlink: 8,
+  roboViolin: -8,
   kickDrum: -2,
   highHat: -12,
 }
@@ -544,7 +539,7 @@ function playPiano(note, r) {
   s.volume.value = volume
   var duration = note.quantizedEndStep - note.quantizedStartStep
   var dur = '0:0:' + duration/2
-  console.log(note.program, note.pitch, duration, dur)
+//  console.log(note.program, note.pitch, duration, dur)
   s.triggerAttackRelease(Tone.Frequency(r._val, 'midi'), dur);
 }
 
@@ -617,3 +612,9 @@ function playSeq() {
   player.start(loop.seqs[loop.loopCount], state.tempo, playNote)
   .then(playSeq)
 }
+
+document.getElementById('message').innerText = 'Done loading model.'
+mm.Player.tone.context.resume();
+
+initLoops()
+
