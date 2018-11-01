@@ -188,6 +188,7 @@ const compose = (chords) => {
       }
 
       const roots = chords.map(mm.chords.ChordSymbols.root);
+      const bassDuration = 4
       for (let i=0; i<NUM_REPS; i++) {
         // Add the bass progression.
 
@@ -197,7 +198,7 @@ const compose = (chords) => {
             program: 2,
             pitch: 36 + roots[j],
             quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
-            quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
+            quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 2*bassDuration
           });
           if (Math.random() < 0.9) {
             seq.notes.push({
@@ -205,7 +206,7 @@ const compose = (chords) => {
               program: 3,
               pitch: 36 + roots[j] - (Math.random() < 0.3 ? 1 : 0),
               quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 3/4,
-              quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 1 + STEPS_PER_CHORD * 3/4,
+              quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + bassDuration + STEPS_PER_CHORD * 3/4,
             });
           }
           if (Math.random() < 0.6) {
@@ -214,7 +215,7 @@ const compose = (chords) => {
               program: 3,
               pitch: 36 + roots[j] - (Math.random() < 0.9 ? 1 : 0),
               quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 7/8,
-              quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 1 + STEPS_PER_CHORD * 7/8,
+              quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + bassDuration + STEPS_PER_CHORD * 7/8,
             });
           }
 
@@ -452,10 +453,10 @@ const INSTRUMENTS = {
 
 const INSTRUMENT_VOLUMES = {
   plink: 6,
-  bassPlink: 6,
-  roboViolin: -4,
-  kickDrum: -4,
-  highHat: -16,
+  bassPlink: 4,
+  roboViolin: -2,
+  kickDrum: -2,
+  highHat: -12,
 }
 
 const VOLUMES = [
@@ -541,7 +542,10 @@ function playPiano(note, r) {
 
   const s = note.program === 1 ? INSTRUMENTS.plink : INSTRUMENTS.bassPlink
   s.volume.value = volume
-  s.triggerAttackRelease(Tone.Frequency(r._val, 'midi'), '16n');
+  var duration = note.quantizedEndStep - note.quantizedStartStep
+  var dur = '0:0:' + duration/2
+  console.log(note.program, note.pitch, duration, dur)
+  s.triggerAttackRelease(Tone.Frequency(r._val, 'midi'), dur);
 }
 
 const isAt = (grid) =>
