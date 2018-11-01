@@ -155,7 +155,7 @@ const compose = (chords) => {
       });
       console.log('composition ready', seq.pitches)
 
-      const drumRepsPerLoop = 2
+      const drumRepsPerLoop = 4
 
       const drums = []
       for (let j=0; j<STEPS_PER_PROG/2/drumRepsPerLoop; j++) {
@@ -384,7 +384,7 @@ const INSTRUMENTS = {
       "envelope": {
         "attack": 0.01,
         "decay": 0.1,
-        "sustain": 0.2,
+        "sustain": 0.6,
         "release": 0.6,
       }
     })
@@ -450,19 +450,29 @@ const INSTRUMENTS = {
   })(),
 }
 
-
+const INSTRUMENT_VOLUMES = {
+  plink: 6,
+  bassPlink: 6,
+  roboViolin: -4,
+  kickDrum: -4,
+  highHat: -16,
+}
 
 const VOLUMES = [
   {piano: 0, synth: 0, drums: 0,},
-  {piano: -2, synth: -2, drums: 2,},
-  {piano: 2, synth: -2, drums: -2,},
-  {piano: -2, synth: 2, drums: -2,},
+  {piano: 0, synth: 0, drums: 0,},
+  {piano: 0, synth: 0, drums: 0,},
+  {piano: 0, synth: 0, drums: 0,},
+  // this is a gimmick, not really good experience and fucks with mastering
+  // {piano: -2, synth: -2, drums: 2,},
+  // {piano: 2, synth: -2, drums: -2,},
+  // {piano: -2, synth: 2, drums: -2,},
 ]
 
 function playSynth(note, r) {
   var offset = 12
   const s = note.instrument === 3 ? INSTRUMENTS.roboCello : INSTRUMENTS.roboViolin
-  const baseVolume = state.volume + VOLUMES[state.character].synth - 4
+  const baseVolume = state.volume + VOLUMES[state.character].synth + INSTRUMENT_VOLUMES.roboViolin
 
   if (note.instrument === 3 && isAt(1)(note)) {
     s.volume.value = baseVolume
@@ -500,7 +510,7 @@ function playPiano(note, r) {
     return
   }
   const baseVolume = state.volume + VOLUMES[state.character].piano
-  var volume = baseVolume - 12
+  var volume = baseVolume + INSTRUMENT_VOLUMES.plink
   // if (isAt(16)(note)) {
   //   volume = baseVolume - 18
   // }
@@ -514,10 +524,10 @@ function playPiano(note, r) {
   //   volume = baseVolume - 12
   // }
   if (isAt(1)(note) && note.program === 2) {
-    volume = baseVolume - 12
+    volume = baseVolume  + INSTRUMENT_VOLUMES.bassPlink
   }
   if (!isAt(1)(note) && note.program === 3) {
-    volume = baseVolume - 10
+    volume = baseVolume + INSTRUMENT_VOLUMES.bassPlink + 2
     if (Math.random() > state.intensity) {
       return
     }
@@ -530,7 +540,7 @@ function playPiano(note, r) {
   // player.start(Tone.now(), 0, 1);
 
   const s = note.program === 1 ? INSTRUMENTS.plink : INSTRUMENTS.bassPlink
-  s.volume.value = volume + 18
+  s.volume.value = volume
   s.triggerAttackRelease(Tone.Frequency(r._val, 'midi'), '16n');
 }
 
@@ -560,7 +570,7 @@ function playDrum(note, r) {
   const baseVolume = state.volume + VOLUMES[state.character].drums
 
   if (note.program === 1 && (Math.random() < state.intensity)) {
-    INSTRUMENTS.kickDrum.volume.value = baseVolume - 4
+    INSTRUMENTS.kickDrum.volume.value = baseVolume + INSTRUMENT_VOLUMES.kickDrum
     INSTRUMENTS.kickDrum.triggerAttackRelease('C1', '2n');
   } else if (note.program === 1 && isAt(1)(note) && Math.random() < 0.9) {
     INSTRUMENTS.kickDrum.volume.value = baseVolume + 0
@@ -568,7 +578,7 @@ function playDrum(note, r) {
   }
 
   if (note.program === 2 && Math.random() < state.intensity) {
-    INSTRUMENTS.closedHH.volume.value = baseVolume - 16
+    INSTRUMENTS.closedHH.volume.value = baseVolume + INSTRUMENT_VOLUMES.highHat
     INSTRUMENTS.closedHH.triggerAttackRelease('8n');
   }
 }
