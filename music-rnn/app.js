@@ -28,7 +28,8 @@ function printMe(e) {
 }
 
 const SCENES = {
-  base: ['Am', 'D7', 'G', 'G'],
+//  base: ['Am', 'D7', 'G', 'G'],
+  base: ['G', 'C', 'G', 'D'],
   mainmenu: ['D', 'G', 'C', 'E'],
   level: ['E', 'A', 'E', 'B'],
   debrief: ['C', 'F', 'C', 'G'],
@@ -37,7 +38,7 @@ const SCENES = {
 }
 
 const SAD_SCENES = {
-  base: ['D0', 'B7', 'Em', 'Em'],
+//  base: ['D0', 'B7', 'Em', 'Em'],
 }
 
 const MOODS = ['happy', 'sad',]
