@@ -138,104 +138,112 @@ const compose = (chords) => {
     uniqPitches: [],
   };
 
-  return model.continueSequence(seq, STEPS_PER_PROG + (NUM_REPS-1)*STEPS_PER_PROG - 1, 0.75, chords)
-    .then((contSeq) => {
-      // Add the continuation to the original.
-      contSeq.notes.forEach((note) => {
-        seq.pitches[note.pitch] = (seq.pitches[note.pitch] || 0) + 1
-        note.quantizedStartStep += 1;
-        note.quantizedEndStep += 1;
-        note.instrument = 1
-        note.program = 1
-        seq.notes.push(note);
-        // unix style uniq
-        if (seq.uniqPitches[seq.uniqPitches.length - 1] !== note.pitch) {
-          seq.uniqPitches.push(note.pitch)
-        }
-      });
-      console.log('composition ready', seq.pitches)
-
-      const drumRepsPerLoop = 4
-
-      const drums = []
-      for (let j=0; j<STEPS_PER_PROG/2/drumRepsPerLoop; j++) {
-        const note = {
-          instrument: 2,
-          quantizedStartStep: j * 2,
-          quantizedEndStep: j * 2 + 1
-        }
-        if (randomPlay(note, kickProb, 2)) {
-          drums.push(Object.assign({}, note, {
-            program: 1,
-          }))
-        }
-        if (randomPlay(note, hhProb, 2)) {
-          drums.push(Object.assign({}, note, {
-            program: 2,
-          }))
-        }
+  return new Promise(resolve => {
+    const melodies = state.melodies[chords.join()]
+    const melody = melodies ?
+        melodies[Math.floor(Math.random() * melodies.length)]
+        : []
+    const notes = []
+    for (let i = 0; i < melody.length/3; i++) {
+      notes.push({
+        pitch: melody[i*3],
+        quantizedStartStep: melody[i*3+1] + 1,
+        quantizedEndStep: melody[i*3+1] + melody[i*3+2] + 1,
+      })
+    }
+    notes.forEach((note) => {
+      seq.pitches[note.pitch] = (seq.pitches[note.pitch] || 0) + 1
+      note.instrument = 1
+      note.program = 1
+      seq.notes.push(note);
+      // unix style uniq
+      if (seq.uniqPitches[seq.uniqPitches.length - 1] !== note.pitch) {
+        seq.uniqPitches.push(note.pitch)
       }
+    });
+    console.log('composition ready', seq.pitches)
 
-      for (let i=0; i<NUM_REPS*drumRepsPerLoop; i++) {
-        drums.map(note =>
-          Object.assign({}, note, {
-            quantizedStartStep: i*STEPS_PER_PROG/drumRepsPerLoop + note.quantizedStartStep,
-            quantizedEndStep: i*STEPS_PER_PROG/drumRepsPerLoop + note.quantizedEndStep,
-          })
-        ).forEach(note => {
-          seq.notes.push(note)
+    const drumRepsPerLoop = 4
+
+    const drums = []
+    for (let j=0; j<STEPS_PER_PROG/2/drumRepsPerLoop; j++) {
+      const note = {
+        instrument: 2,
+        quantizedStartStep: j * 2,
+        quantizedEndStep: j * 2 + 1
+      }
+      if (randomPlay(note, kickProb, 2)) {
+        drums.push(Object.assign({}, note, {
+          program: 1,
+        }))
+      }
+      if (randomPlay(note, hhProb, 2)) {
+        drums.push(Object.assign({}, note, {
+          program: 2,
+        }))
+      }
+    }
+
+    for (let i=0; i<NUM_REPS*drumRepsPerLoop; i++) {
+      drums.map(note =>
+        Object.assign({}, note, {
+          quantizedStartStep: i*STEPS_PER_PROG/drumRepsPerLoop + note.quantizedStartStep,
+          quantizedEndStep: i*STEPS_PER_PROG/drumRepsPerLoop + note.quantizedEndStep,
         })
-      }
+      ).forEach(note => {
+        seq.notes.push(note)
+      })
+    }
 
-      const roots = chords.map(mm.chords.ChordSymbols.root);
-      const bassDuration = 4
-      for (let i=0; i<NUM_REPS; i++) {
-        // Add the bass progression.
+    const roots = chords.map(mm.chords.ChordSymbols.root);
+    const bassDuration = 4
+    for (let i=0; i<NUM_REPS; i++) {
+      // Add the bass progression.
 
-        for (let j=0; j<4; j++) {
+      for (let j=0; j<4; j++) {
+        seq.notes.push({
+          instrument: 1,
+          program: 2,
+          pitch: 36 + roots[j],
+          quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
+          quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 2*bassDuration
+        });
+        if (Math.random() < 0.9) {
           seq.notes.push({
             instrument: 1,
-            program: 2,
-            pitch: 36 + roots[j],
-            quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
-            quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + 2*bassDuration
+            program: 3,
+            pitch: 36 + roots[j] - (Math.random() < 0.3 ? 1 : 0),
+            quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 3/4,
+            quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + bassDuration + STEPS_PER_CHORD * 3/4,
           });
-          if (Math.random() < 0.9) {
-            seq.notes.push({
-              instrument: 1,
-              program: 3,
-              pitch: 36 + roots[j] - (Math.random() < 0.3 ? 1 : 0),
-              quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 3/4,
-              quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + bassDuration + STEPS_PER_CHORD * 3/4,
-            });
-          }
-          if (Math.random() < 0.6) {
-            seq.notes.push({
-              instrument: 1,
-              program: 3,
-              pitch: 36 + roots[j] - (Math.random() < 0.9 ? 1 : 0),
-              quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 7/8,
-              quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + bassDuration + STEPS_PER_CHORD * 7/8,
-            });
-          }
-
         }
-        for (let j=0; j<4; j++) {
+        if (Math.random() < 0.6) {
           seq.notes.push({
-            instrument: 3,
-            program: 1,
-            pitch: roots[j] + 60,//seq.uniqPitches[j%seq.uniqPitches.length] + 12,
-            quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
-            quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
+            instrument: 1,
+            program: 3,
+            pitch: 36 + roots[j] - (Math.random() < 0.9 ? 1 : 0),
+            quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + STEPS_PER_CHORD * 7/8,
+            quantizedEndStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD + bassDuration + STEPS_PER_CHORD * 7/8,
           });
         }
+
       }
+      for (let j=0; j<4; j++) {
+        seq.notes.push({
+          instrument: 3,
+          program: 1,
+          pitch: roots[j] + 60,//seq.uniqPitches[j%seq.uniqPitches.length] + 12,
+          quantizedStartStep: i*STEPS_PER_PROG + j * STEPS_PER_CHORD,
+          quantizedEndStep: i*STEPS_PER_PROG + (j+1) * STEPS_PER_CHORD
+        });
+      }
+    }
 
-      // Set total sequence length.
-      seq.totalQuantizedSteps = STEPS_PER_PROG * NUM_REPS;
+    // Set total sequence length.
+    seq.totalQuantizedSteps = STEPS_PER_PROG * NUM_REPS;
 
-      return seq;
-    });
+    resolve(seq)
+  });
 }
 
 function initLoops() {
@@ -266,7 +274,6 @@ function initLoops() {
     state.pollHandler = setInterval(pollParams, 1000);
     state.composing = false
   })
-  .then(saveState)
 }
 
 
@@ -323,24 +330,17 @@ model.initialize().then(() => {
   document.getElementById('message').innerText = 'Done loading model.'
   mm.Player.tone.context.resume();
 
-  // unused, just to warm up RNN
-  // compose(['A', 'B', 'C', 'D'])
-  // .then(initLoops)
   initLoops()
 });
 
 const LS_KEY = 'genmusic-state'
 
-function loadState() {
-  // state = JSON.parse(localStorage.getItem(LS_KEY)) || state
+function loadMelodies() {
+  state.melodies = JSON.parse(localStorage.getItem(LS_KEY)) || {}
   state.started = false
 }
 
-loadState()
-
-function saveState() {
-  localStorage.setItem(LS_KEY, JSON.stringify(state))
-}
+loadMelodies()
 
 const INSTRUMENTS = {
   plink: (() => {
@@ -616,5 +616,4 @@ function playSeq() {
 
   player.start(loop.seqs[loop.loopCount], state.tempo, playNote)
   .then(playSeq)
-  .then(saveState)
 }
