@@ -76,7 +76,6 @@ var state = {
 
 // returns an improvised Sequence over the specifed chord progression.
 const compose = (chords) => {
-  console.log('composing loop', chords)
   // Prime with root note of the first chord.
   const root = mm.chords.ChordSymbols.root(chords[0]);
   const seq = {
@@ -96,6 +95,10 @@ const compose = (chords) => {
 }
 
 function initLoops() {
+  if (state.stop) {
+    return
+  }
+  console.log('composing loops')
   const composers = []
   const chordKeys = []
   Object.keys(SCENES).forEach(scene => {
@@ -117,12 +120,20 @@ function initLoops() {
     })
   })
   .then(saveState)
+  .then(initLoops)
 }
 
 function setup() {
+  createCanvas(800,400);
 }
 
 function draw() {
+  fill(200,0,100);
+  text("Click to stop generation", 200, 300);
+}
+
+function mouseReleased() {
+  state.stop = true
 }
 
 // Initialize model then start playing.
