@@ -331,12 +331,20 @@ function mouseReleased() {
 
 const LS_KEY = 'genmusic-state'
 
-function loadMelodies() {
-  state.melodies = JSON.parse(localStorage.getItem(LS_KEY)) || {}
+function loadMelodies(init) {
   state.started = false
+  state.melodies = JSON.parse(localStorage.getItem(LS_KEY))
+  if (!state.melodies) {
+    fetch('canned.json')
+    .then(resp => resp.json())
+    .then(data => {
+      state.melodies = data
+      init()
+    })
+  } else {
+    init()
+  }
 }
-
-loadMelodies()
 
 const INSTRUMENTS = {
   plink: (() => {
@@ -617,5 +625,5 @@ function playSeq() {
 document.getElementById('message').innerText = 'Done loading model.'
 mm.Player.tone.context.resume();
 
-initLoops()
+loadMelodies(initLoops)
 
