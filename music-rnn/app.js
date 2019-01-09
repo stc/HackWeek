@@ -61,6 +61,7 @@ var state = {
   pollHandler: null,
   loops: {},
   composing: true,
+  isPlaying: false,
 }
 
 function resetSeq() {
@@ -89,10 +90,10 @@ function translateParams(params) {
   state.character = params.character || 0
   state.volume = params.volume || 0
 
-  if (!state.started) {
-    state.started = true
-    playSeq()
-  }
+  // if (!state.started) {
+  //   state.started = true
+  //   playSeq()
+  // }
 }
 
 function pollParams() {
@@ -319,14 +320,18 @@ function draw() {
     text("HELLO. I AM REGULAR HUMAN PIANIST. PLEASE WAIT WHILE I COMPOSE.", x, y)
   }
   fill(200,0,100);
-  text("Click to stop", x, 300);
+  text(state.isPlaying ? "Click to stop" : "Click to start", x, 300);
 }
 
 function mouseReleased() {
-  player.stop()
-  if (state.pollHandler) {
-    clearInterval(state.pollHandler)
+  if (state.isPlaying) {
+    state.started = false
+    player.stop()
+  } else {
+    state.started = true
+    playSeq()
   }
+  state.isPlaying = !state.isPlaying
 }
 
 const LS_KEY = 'genmusic-state'
