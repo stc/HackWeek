@@ -23,6 +23,7 @@ const REPEAT_CHANCE = 0.0
 // Set up Improv RNN model and player.
 const player = new mm.Player(true,printMe);
 
+
 function printMe(e) {
   // console.log(e);
 }
@@ -324,10 +325,15 @@ function draw() {
 }
 
 function mouseReleased() {
+
   if (state.isPlaying) {
     state.started = false
     player.stop()
   } else {
+    mm.Player.tone.context.resume();
+    if (Tone.context.state !== 'running') {
+        Tone.context.resume();
+    }
     state.started = true
     playSeq()
   }
@@ -628,7 +634,6 @@ function playSeq() {
 }
 
 document.getElementById('message').innerText = 'Done loading model.'
-mm.Player.tone.context.resume();
 
 loadMelodies(initLoops)
 
